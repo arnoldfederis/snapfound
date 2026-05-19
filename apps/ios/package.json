@@ -1,0 +1,10 @@
+{
+  "name": "@repo/ios",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "swift-format lint -r .",
+    "format": "swift-format format -r . --in-place",
+    "pre:push": "bun lint && bun format"
+  }
+}

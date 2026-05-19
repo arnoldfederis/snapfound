@@ -1,0 +1,24 @@
+{
+  "name": "snapfound",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "pre:push": "turbo pre:push && turbo check-types",
+    "check-types": "turbo run check-types"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "@types/bun": "1.3.14",
+    "@typescript/native-preview": "7.0.0-dev.20260517.1",
+    "tailwindcss": "4.3.0"
+  },
+  "packageManager": "bun@1.3.12",
+  "workspaces": {
+    "packages": [
+      "apps/*"
+    ]
+  }
+}
