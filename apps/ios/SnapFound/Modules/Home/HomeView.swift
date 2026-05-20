@@ -9,6 +9,7 @@ struct HomeView: View {
 
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
   @AppStorage("gridZoomLevel") private var zoomLevelRaw = GridZoomLevel.comfortable.rawValue
+  @AppStorage("gridCropSquare") private var gridCropSquare = true
   @State private var viewModel = HomeViewModel()
   @State private var showOnboarding = false
   @Namespace private var zoomNamespace
@@ -24,10 +25,11 @@ struct HomeView: View {
         viewModel: viewModel,
         zoomLevel: zoomLevel,
         zoomLevelRaw: $zoomLevelRaw,
-        namespace: zoomNamespace
+        namespace: zoomNamespace,
+        isCropSquare: gridCropSquare
       )
       .navigationDestination(for: ScreenshotRecord.self) { record in
-        DetailView(record: record)
+        DetailView(record: record, allRecords: records)
           .navigationTransition(.zoom(sourceID: record.assetID, in: zoomNamespace))
       }
       .navigationTitle(viewModel.isSelectionMode ? selectionTitle : "SnapFound")
@@ -52,7 +54,13 @@ struct HomeView: View {
             .tint(.red)
           }
         } else {
-          ToolbarItem(placement: .topBarTrailing) {
+          ToolbarItemGroup(placement: .topBarTrailing) {
+            Button {
+              gridCropSquare.toggle()
+              Haptics.selection()
+            } label: {
+              Image(systemName: gridCropSquare ? "square.fill" : "aspectratio")
+            }
             Button {
               viewModel.showSettings = true
             } label: {
@@ -108,6 +116,7 @@ private struct HomeBodyView: View {
   let zoomLevel: GridZoomLevel
   @Binding var zoomLevelRaw: Int
   let namespace: Namespace.ID
+  let isCropSquare: Bool
 
   @Environment(PurchaseManager.self) private var purchaseManager
   @Environment(\.isSearching) private var isSearching
@@ -244,7 +253,8 @@ private struct HomeBodyView: View {
         ScreenshotGridCell(
           record: item.record,
           matchedTerms: item.terms,
-          isSelected: isSelected
+          isSelected: isSelected,
+          isCropSquare: isCropSquare
         )
       }
       .buttonStyle(.plain)
@@ -253,7 +263,8 @@ private struct HomeBodyView: View {
         ScreenshotGridCell(
           record: item.record,
           matchedTerms: item.terms,
-          isSelected: false
+          isSelected: false,
+          isCropSquare: isCropSquare
         )
       }
       .buttonStyle(.plain)

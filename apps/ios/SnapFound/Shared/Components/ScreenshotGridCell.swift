@@ -4,14 +4,30 @@ struct ScreenshotGridCell: View {
   let record: ScreenshotRecord
   var matchedTerms: [String] = []
   var isSelected: Bool = false
+  var isCropSquare: Bool = true
+
+  @ViewBuilder
+  private var thumbnailContent: some View {
+    let nativeRatio: CGFloat =
+      record.height > 0
+      ? CGFloat(record.width) / CGFloat(record.height)
+      : 1
+    if isCropSquare {
+      ThumbnailView(data: record.thumbnailData)
+        .frame(maxWidth: .infinity)
+        .aspectRatio(1, contentMode: .fill)
+        .clipped()
+    } else {
+      ThumbnailView(data: record.thumbnailData)
+        .frame(maxWidth: .infinity)
+        .aspectRatio(nativeRatio, contentMode: .fit)
+    }
+  }
 
   var body: some View {
     VStack(spacing: 0) {
       ZStack(alignment: .topLeading) {
-        ThumbnailView(data: record.thumbnailData)
-          .frame(maxWidth: .infinity)
-          .aspectRatio(9 / 19.5, contentMode: .fill)
-          .clipped()
+        thumbnailContent
 
         if isSelected {
           Image(systemName: "checkmark.circle.fill")
