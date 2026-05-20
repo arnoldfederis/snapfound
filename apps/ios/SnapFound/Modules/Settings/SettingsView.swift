@@ -25,32 +25,25 @@ struct SettingsView: View {
           Button("Done") { dismiss() }
         }
       }
-      .confirmationDialog(
-        "Delete all indexed data?",
-        isPresented: $viewModel.showDeleteConfirmation,
-        titleVisibility: .visible
-      ) {
-        Button("Delete Index", role: .destructive) {
+      .sheet(isPresented: $viewModel.showDeleteConfirmation) {
+        DestructiveActionModal(
+          title: "Delete all indexed data?",
+          message: "This removes all OCR text and tags. Your photos are not affected.",
+          actionLabel: "Delete Index"
+        ) {
           viewModel.deleteIndex(modelContext: modelContext)
         }
-        Button("Cancel", role: .cancel) {}
-      } message: {
-        Text("This removes all OCR text and tags. Your photos are not affected.")
       }
-      .confirmationDialog(
-        "Rebuild full index?",
-        isPresented: $viewModel.showRebuildConfirmation,
-        titleVisibility: .visible
-      ) {
-        Button("Rebuild", role: .destructive) {
+      .sheet(isPresented: $viewModel.showRebuildConfirmation) {
+        DestructiveActionModal(
+          title: "Rebuild full index?",
+          message:
+            "All existing index data will be deleted and rebuilt from scratch. This may take a few minutes.",
+          actionLabel: "Rebuild Index"
+        ) {
           viewModel.rebuildIndex(modelContext: modelContext, isPro: purchaseManager.isPro)
           dismiss()
         }
-        Button("Cancel", role: .cancel) {}
-      } message: {
-        Text(
-          "All existing index data will be deleted and rebuilt from scratch. This may take a few minutes."
-        )
       }
       .sheet(isPresented: $showPaywall) {
         PaywallView()

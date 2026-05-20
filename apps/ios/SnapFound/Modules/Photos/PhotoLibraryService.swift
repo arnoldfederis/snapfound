@@ -1,5 +1,5 @@
 @preconcurrency import Photos
-import UIKit
+import SwiftUI
 
 final class PhotoLibraryService {
   static let shared = PhotoLibraryService()

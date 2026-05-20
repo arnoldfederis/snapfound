@@ -1,4 +1,4 @@
-import UIKit
+import SwiftUI
 @preconcurrency import Vision
 
 /// Actor executor is off the main thread — Vision's blocking perform() won't stall UI.

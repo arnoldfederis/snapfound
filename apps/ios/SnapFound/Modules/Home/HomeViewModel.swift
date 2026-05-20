@@ -1,6 +1,7 @@
 import Foundation
 import Photos
 import SwiftData
+internal import UIKit
 
 @MainActor
 @Observable
@@ -8,6 +9,11 @@ final class HomeViewModel {
   var searchText = ""
   var showPaywall = false
   var showSettings = false
+
+  // Selection mode
+  var isSelectionMode = false
+  var selectedIDs: Set<String> = []
+  var showDeleteSelected = false
 
   private(set) var searchService = SearchService()
   private let indexingService = IndexingService.shared
@@ -62,5 +68,34 @@ final class HomeViewModel {
 
   func isAtFreeLimit(recordsCount: Int, isPro: Bool) -> Bool {
     !isPro && recordsCount >= IndexingService.freeIndexLimit
+  }
+
+  // MARK: - Selection
+
+  func enterSelectionMode() {
+    isSelectionMode = true
+    Haptics.impact(.medium)
+  }
+
+  func exitSelectionMode() {
+    isSelectionMode = false
+    selectedIDs.removeAll()
+  }
+
+  func toggleSelection(_ id: String) {
+    if selectedIDs.contains(id) {
+      selectedIDs.remove(id)
+    } else {
+      selectedIDs.insert(id)
+      Haptics.selection()
+    }
+  }
+
+  func deleteSelected(modelContext: ModelContext, records: [ScreenshotRecord]) {
+    let toDelete = records.filter { selectedIDs.contains($0.assetID) }
+    for record in toDelete { modelContext.delete(record) }
+    try? modelContext.save()
+    exitSelectionMode()
+    Haptics.notification(.success)
   }
 }

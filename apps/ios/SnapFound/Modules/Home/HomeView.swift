@@ -8,39 +8,56 @@ struct HomeView: View {
   private var records: [ScreenshotRecord]
 
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+  @AppStorage("gridZoomLevel") private var zoomLevelRaw = GridZoomLevel.comfortable.rawValue
   @State private var viewModel = HomeViewModel()
   @State private var showOnboarding = false
+  @Namespace private var zoomNamespace
 
-  private let columns = [
-    GridItem(.flexible(), spacing: 10),
-    GridItem(.flexible(), spacing: 10),
-    GridItem(.flexible(), spacing: 10),
-  ]
+  private var zoomLevel: GridZoomLevel {
+    GridZoomLevel(rawValue: zoomLevelRaw) ?? .comfortable
+  }
 
   var body: some View {
     NavigationStack {
-      // HomeBodyView is a subview so @Environment(\.isSearching) resolves correctly
-      // inside it (isSearching is set by .searchable on the NavigationStack).
       HomeBodyView(
         records: records,
         viewModel: viewModel,
-        columns: columns
+        zoomLevel: zoomLevel,
+        zoomLevelRaw: $zoomLevelRaw,
+        namespace: zoomNamespace
       )
       .navigationDestination(for: ScreenshotRecord.self) { record in
         DetailView(record: record)
+          .navigationTransition(.zoom(sourceID: record.assetID, in: zoomNamespace))
       }
-      .navigationTitle("SnapFound")
+      .navigationTitle(viewModel.isSelectionMode ? selectionTitle : "SnapFound")
       .navigationBarTitleDisplayMode(.large)
       .searchable(text: $viewModel.searchText, prompt: "Search screenshots…")
       .onChange(of: viewModel.searchText) {
         viewModel.search(in: records)
       }
       .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
-          Button {
-            viewModel.showSettings = true
-          } label: {
-            Image(systemName: "gear")
+        if viewModel.isSelectionMode {
+          ToolbarItem(placement: .topBarLeading) {
+            Button("Cancel") { viewModel.exitSelectionMode() }
+          }
+          ToolbarItem(placement: .topBarTrailing) {
+            Button {
+              viewModel.showDeleteSelected = true
+              Haptics.notification(.warning)
+            } label: {
+              Label("Delete Selected", systemImage: "trash")
+            }
+            .disabled(viewModel.selectedIDs.isEmpty)
+            .tint(.red)
+          }
+        } else {
+          ToolbarItem(placement: .topBarTrailing) {
+            Button {
+              viewModel.showSettings = true
+            } label: {
+              Image(systemName: "gear")
+            }
           }
         }
       }
@@ -49,6 +66,15 @@ struct HomeView: View {
       }
       .sheet(isPresented: $viewModel.showPaywall) {
         PaywallView()
+      }
+      .sheet(isPresented: $viewModel.showDeleteSelected) {
+        DestructiveActionModal(
+          title: "Delete \(viewModel.selectedIDs.count) Screenshots from Index?",
+          message: "Index entries will be removed. Original photos are not affected.",
+          actionLabel: "Delete \(viewModel.selectedIDs.count) from Index"
+        ) {
+          viewModel.deleteSelected(modelContext: modelContext, records: records)
+        }
       }
       .fullScreenCover(isPresented: $showOnboarding) {
         OnboardingView {
@@ -66,6 +92,12 @@ struct HomeView: View {
       }
     }
   }
+
+  private var selectionTitle: String {
+    viewModel.selectedIDs.isEmpty
+      ? "Select Screenshots"
+      : "\(viewModel.selectedIDs.count) Selected"
+  }
 }
 
 // MARK: - Body (needs its own type to access isSearching environment)
@@ -73,7 +105,9 @@ struct HomeView: View {
 private struct HomeBodyView: View {
   let records: [ScreenshotRecord]
   let viewModel: HomeViewModel
-  let columns: [GridItem]
+  let zoomLevel: GridZoomLevel
+  @Binding var zoomLevelRaw: Int
+  let namespace: Namespace.ID
 
   @Environment(PurchaseManager.self) private var purchaseManager
   @Environment(\.isSearching) private var isSearching
@@ -107,12 +141,130 @@ private struct HomeBodyView: View {
 
         if records.isEmpty {
           noScreenshotsEmptyState
+        } else if zoomLevel.isGrouped {
+          groupedGridView
         } else {
-          screenshotGrid(items: records.map { CellItem(record: $0, terms: []) })
+          flatGrid(items: records.map { CellItem(record: $0, terms: []) })
         }
       }
-      .padding(.horizontal, 16)
+      .padding(.horizontal, zoomLevel == .compact ? 6 : 16)
       .padding(.top, 8)
+    }
+    .gesture(
+      MagnifyGesture()
+        .onEnded { value in
+          if value.magnification > 1.3, let coarser = zoomLevel.coarser {
+            zoomLevelRaw = coarser.rawValue
+            Haptics.selection()
+          } else if value.magnification < 0.75, let finer = zoomLevel.finer {
+            zoomLevelRaw = finer.rawValue
+            Haptics.selection()
+          }
+        }
+    )
+  }
+
+  // MARK: - Grouped View (months / years)
+
+  private var groupedGridView: some View {
+    LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
+      ForEach(groupedRecords, id: \.key) { group in
+        Section {
+          LazyVGrid(columns: gridColumns(for: .comfortable), spacing: 10) {
+            ForEach(group.records, id: \.assetID) { record in
+              cell(for: CellItem(record: record, terms: []))
+            }
+          }
+          .padding(.horizontal, 16)
+          .padding(.bottom, 16)
+        } header: {
+          Text(group.key)
+            .font(.headline)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.regularMaterial)
+        }
+      }
+    }
+  }
+
+  private struct DateGroup {
+    let key: String
+    let records: [ScreenshotRecord]
+  }
+
+  private var groupedRecords: [DateGroup] {
+    let cal = Calendar.current
+    var result: [DateGroup] = []
+    var keyToIndex: [String: Int] = [:]
+
+    for record in records {
+      let key: String
+      if zoomLevel == .years {
+        key = String(cal.component(.year, from: record.creationDate))
+      } else {
+        key = record.creationDate.formatted(.dateTime.month(.wide).year())
+      }
+      if let idx = keyToIndex[key] {
+        result[idx] = DateGroup(key: key, records: result[idx].records + [record])
+      } else {
+        keyToIndex[key] = result.count
+        result.append(DateGroup(key: key, records: [record]))
+      }
+    }
+    return result
+  }
+
+  // MARK: - Flat Grid
+
+  private func flatGrid(items: [CellItem]) -> some View {
+    LazyVGrid(columns: gridColumns(for: zoomLevel), spacing: zoomLevel.spacing) {
+      ForEach(items, id: \.record.assetID) { item in
+        cell(for: item)
+      }
+    }
+  }
+
+  private func gridColumns(for level: GridZoomLevel) -> [GridItem] {
+    let count = level.columnCount ?? 3
+    return Array(repeating: GridItem(.flexible(), spacing: level.spacing), count: count)
+  }
+
+  // MARK: - Cell
+
+  @ViewBuilder
+  private func cell(for item: CellItem) -> some View {
+    let isSelected = viewModel.selectedIDs.contains(item.record.assetID)
+
+    if viewModel.isSelectionMode {
+      Button {
+        viewModel.toggleSelection(item.record.assetID)
+      } label: {
+        ScreenshotGridCell(
+          record: item.record,
+          matchedTerms: item.terms,
+          isSelected: isSelected
+        )
+      }
+      .buttonStyle(.plain)
+    } else {
+      NavigationLink(value: item.record) {
+        ScreenshotGridCell(
+          record: item.record,
+          matchedTerms: item.terms,
+          isSelected: false
+        )
+      }
+      .buttonStyle(.plain)
+      .matchedTransitionSource(id: item.record.assetID, in: namespace)
+      .simultaneousGesture(
+        LongPressGesture(minimumDuration: 0.5)
+          .onEnded { _ in
+            viewModel.enterSelectionMode()
+            viewModel.toggleSelection(item.record.assetID)
+          }
+      )
     }
   }
 
@@ -171,7 +323,7 @@ private struct HomeBodyView: View {
       ContentUnavailableView.search(text: viewModel.searchText)
     } else {
       ScrollView {
-        screenshotGrid(
+        flatGrid(
           items: viewModel.searchResults.map {
             CellItem(record: $0.record, terms: $0.matchedTerms)
           }
@@ -187,20 +339,6 @@ private struct HomeBodyView: View {
   private struct CellItem {
     let record: ScreenshotRecord
     let terms: [String]
-  }
-
-  private func screenshotGrid(items: [CellItem]) -> some View {
-    LazyVGrid(columns: columns, spacing: 10) {
-      ForEach(items, id: \.record.assetID) { item in
-        NavigationLink(value: item.record) {
-          ScreenshotGridCell(
-            record: item.record,
-            matchedTerms: item.terms
-          )
-        }
-        .buttonStyle(.plain)
-      }
-    }
   }
 
   // MARK: - Status Banners
