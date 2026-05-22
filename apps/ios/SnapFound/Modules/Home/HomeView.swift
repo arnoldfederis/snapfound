@@ -9,7 +9,6 @@ struct HomeView: View {
 
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
   @AppStorage("gridZoomLevel") private var zoomLevelRaw = GridZoomLevel.comfortable.rawValue
-  @AppStorage("gridCropSquare") private var gridCropSquare = true
   @State private var viewModel = HomeViewModel()
   @State private var showOnboarding = false
   @Namespace private var zoomNamespace
@@ -26,7 +25,6 @@ struct HomeView: View {
         zoomLevel: zoomLevel,
         zoomLevelRaw: $zoomLevelRaw,
         namespace: zoomNamespace,
-        isCropSquare: gridCropSquare
       )
       .navigationDestination(for: ScreenshotRecord.self) { record in
         DetailView(record: record, allRecords: records)
@@ -55,12 +53,6 @@ struct HomeView: View {
           }
         } else {
           ToolbarItemGroup(placement: .topBarTrailing) {
-            Button {
-              gridCropSquare.toggle()
-              Haptics.selection()
-            } label: {
-              Image(systemName: gridCropSquare ? "square.fill" : "aspectratio")
-            }
             Button {
               viewModel.showSettings = true
             } label: {
@@ -116,7 +108,6 @@ private struct HomeBodyView: View {
   let zoomLevel: GridZoomLevel
   @Binding var zoomLevelRaw: Int
   let namespace: Namespace.ID
-  let isCropSquare: Bool
 
   @Environment(PurchaseManager.self) private var purchaseManager
   @Environment(\.isSearching) private var isSearching
@@ -253,8 +244,7 @@ private struct HomeBodyView: View {
         ScreenshotGridCell(
           record: item.record,
           matchedTerms: item.terms,
-          isSelected: isSelected,
-          isCropSquare: isCropSquare
+          isSelected: isSelected
         )
       }
       .buttonStyle(.plain)
@@ -263,8 +253,7 @@ private struct HomeBodyView: View {
         ScreenshotGridCell(
           record: item.record,
           matchedTerms: item.terms,
-          isSelected: false,
-          isCropSquare: isCropSquare
+          isSelected: false
         )
       }
       .buttonStyle(.plain)

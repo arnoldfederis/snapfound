@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct DetailView: View {
   let initialRecord: ScreenshotRecord
@@ -12,7 +13,6 @@ struct DetailView: View {
   @State private var backgroundOpacity: Double = 1
   @State private var currentPageImage: UIImage?
   @State private var showInfo = false
-  @State private var isSharePresented = false
 
   init(record: ScreenshotRecord, allRecords: [ScreenshotRecord]) {
     self.initialRecord = record
@@ -42,10 +42,24 @@ struct DetailView: View {
     .toolbarColorScheme(.dark, for: .navigationBar, .bottomBar)
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
-        Button {
-          isSharePresented = true
-        } label: {
+        if let image = currentPageImage {
+          let item = TransferableImage(uiImage: image)
+          let preview = SharePreview(
+            currentRecord.creationDate.shortDisplay,
+            image: Image(uiImage: image)
+          )
+          if currentRecord.ocrText.isEmpty {
+            ShareLink(item: item, preview: preview)
+          } else {
+            ShareLink(
+              item: item,
+              message: Text(currentRecord.ocrText),
+              preview: preview
+            )
+          }
+        } else {
           Image(systemName: "square.and.arrow.up")
+            .opacity(0.4)
         }
       }
       ToolbarItem(placement: .bottomBar) { Spacer() }
@@ -64,9 +78,6 @@ struct DetailView: View {
         try? modelContext.save()
         dismiss()
       }
-    }
-    .sheet(isPresented: $isSharePresented) {
-      ShareSheet(items: shareItems)
     }
     .onChange(of: currentIndex) { _, _ in
       currentPageImage = nil
@@ -100,12 +111,17 @@ struct DetailView: View {
     .tabViewStyle(.page(indexDisplayMode: .never))
     .ignoresSafeArea()
   }
+}
 
-  private var shareItems: [Any] {
-    var items: [Any] = []
-    if let img = currentPageImage { items.append(img) }
-    if !currentRecord.ocrText.isEmpty { items.append(currentRecord.ocrText) }
-    return items
+// MARK: - Transferable image wrapper
+
+private struct TransferableImage: Transferable {
+  let uiImage: UIImage
+
+  static var transferRepresentation: some TransferRepresentation {
+    DataRepresentation(exportedContentType: .png) {
+      $0.uiImage.pngData() ?? Data()
+    }
   }
 }
 
@@ -192,16 +208,4 @@ private struct FilmstripBar: View {
       }
     }
   }
-}
-
-// MARK: - ShareSheet
-
-struct ShareSheet: UIViewControllerRepresentable {
-  let items: [Any]
-
-  func makeUIViewController(context _: Context) -> UIActivityViewController {
-    UIActivityViewController(activityItems: items, applicationActivities: nil)
-  }
-
-  func updateUIViewController(_: UIActivityViewController, context _: Context) {}
 }
