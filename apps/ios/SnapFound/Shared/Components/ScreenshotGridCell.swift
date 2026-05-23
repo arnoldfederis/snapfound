@@ -7,13 +7,27 @@ struct ScreenshotGridCell: View {
 
   @ViewBuilder
   private var thumbnailContent: some View {
-    let nativeRatio: CGFloat =
-      record.height > 0
-      ? CGFloat(record.width) / CGFloat(record.height)
-      : 1
-    ThumbnailView(data: record.thumbnailData)
-      .frame(maxWidth: .infinity)
-      .aspectRatio(nativeRatio, contentMode: .fit)
+    if record.height > 0 {
+      Color.clear
+        .frame(maxWidth: .infinity)
+        .aspectRatio(9 / 16, contentMode: .fit)
+        .clipped()
+        .overlay {
+          ThumbnailView(data: record.thumbnailData)
+            .frame(maxWidth: .infinity)
+            .aspectRatio(CGFloat(record.width) / CGFloat(record.height), contentMode: .fit)
+            .clipped()
+        }
+    } else {
+      ThumbnailView(data: record.thumbnailData)
+        .frame(maxWidth: .infinity)
+        .aspectRatio(9 / 16, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay {
+          RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .stroke(Color(.separator), lineWidth: 0.5)
+        }
+    }
   }
 
   var body: some View {

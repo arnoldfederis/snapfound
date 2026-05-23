@@ -20,8 +20,7 @@ struct SnapFoundApp: App {
 
   var body: some Scene {
     WindowGroup {
-      HomeView()
-        .environment(purchaseManager)
+      HomeView().environment(purchaseManager)
     }
     .modelContainer(sharedModelContainer)
   }

@@ -71,8 +71,7 @@ final class SearchService {
 
     let tokens =
       normalised
-      .components(separatedBy: .whitespaces)
-      .map { $0.trimmingCharacters(in: .punctuationCharacters) }
+      .components(separatedBy: CharacterSet.alphanumerics.inverted)
       .filter { !$0.isEmpty && $0.count > 1 }
 
     var expanded = Set(tokens)
@@ -121,25 +120,42 @@ final class SearchService {
       }
     }
 
-    // Exact phrase bonus
+    // Exact phrase match (highest weight)
     if ocrLower.contains(query.originalText.lowercased()) {
-      score += 5.0
+      score += 6.0
       matched.insert(query.originalText)
     }
 
-    // Token matching in OCR text
-    for token in query.expandedTokens {
+    // Original token matching in OCR (higher weight)
+    for token in query.tokens {
       if ocrLower.contains(token) {
-        score += token.count > 4 ? 2.0 : 1.0
+        score += token.count > 4 ? 3.0 : 2.0
         matched.insert(token)
       }
     }
 
-    // Tag matching (weighted higher)
-    for tag in tagsLower {
-      if query.expandedTokens.contains(tag) {
-        score += 3.0
-        matched.insert(tag)
+    // Original token matching in tags (highest per-token weight)
+    for token in query.tokens {
+      if tagsLower.contains(token) {
+        score += 4.0
+        matched.insert(token)
+      }
+    }
+
+    // Require at least one direct token match before applying synonym expansion
+    let hasDirectMatch = !matched.isEmpty || query.dateFilter != nil
+    guard hasDirectMatch else { return (0, []) }
+
+    // Synonym-expanded tokens (lower weight, only boosts existing matches)
+    let synonymTokens = query.expandedTokens.filter { !query.tokens.contains($0) }
+    for token in synonymTokens {
+      if ocrLower.contains(token) {
+        score += token.count > 4 ? 1.0 : 0.5
+        matched.insert(token)
+      }
+      if tagsLower.contains(token) {
+        score += 1.5
+        matched.insert(token)
       }
     }
 

@@ -24,14 +24,12 @@ struct HomeView: View {
         viewModel: viewModel,
         zoomLevel: zoomLevel,
         zoomLevelRaw: $zoomLevelRaw,
-        namespace: zoomNamespace,
+        namespace: zoomNamespace
       )
       .navigationDestination(for: ScreenshotRecord.self) { record in
         DetailView(record: record, allRecords: records)
           .navigationTransition(.zoom(sourceID: record.assetID, in: zoomNamespace))
       }
-      .navigationTitle(viewModel.isSelectionMode ? selectionTitle : "SnapFound")
-      .navigationBarTitleDisplayMode(.large)
       .searchable(text: $viewModel.searchText, prompt: "Search screenshots…")
       .onChange(of: viewModel.searchText) {
         viewModel.search(in: records)
@@ -50,6 +48,24 @@ struct HomeView: View {
             }
             .disabled(viewModel.selectedIDs.isEmpty)
             .tint(.red)
+            .confirmationDialog(
+              "Delete \(viewModel.selectedIDs.count) Screenshots from Index?",
+              isPresented: $viewModel.showDeleteSelected,
+              titleVisibility: .visible
+            ) {
+              Button("Delete \(viewModel.selectedIDs.count)", role: .destructive) {
+                viewModel.deleteSelected(modelContext: modelContext, records: records)
+                viewModel.showDeleteSelected = false
+              }
+
+              Button("Cancel", role: .cancel) {
+                viewModel.showDeleteSelected = false
+              }
+            } message: {
+              Text(
+                "All existing index data will be deleted and rebuilt from scratch. This may take a few minutes."
+              )
+            }
           }
         } else {
           ToolbarItemGroup(placement: .topBarTrailing) {
@@ -66,15 +82,6 @@ struct HomeView: View {
       }
       .sheet(isPresented: $viewModel.showPaywall) {
         PaywallView()
-      }
-      .sheet(isPresented: $viewModel.showDeleteSelected) {
-        DestructiveActionModal(
-          title: "Delete \(viewModel.selectedIDs.count) Screenshots from Index?",
-          message: "Index entries will be removed. Original photos are not affected.",
-          actionLabel: "Delete \(viewModel.selectedIDs.count) from Index"
-        ) {
-          viewModel.deleteSelected(modelContext: modelContext, records: records)
-        }
       }
       .fullScreenCover(isPresented: $showOnboarding) {
         OnboardingView {
@@ -93,11 +100,6 @@ struct HomeView: View {
     }
   }
 
-  private var selectionTitle: String {
-    viewModel.selectedIDs.isEmpty
-      ? "Select Screenshots"
-      : "\(viewModel.selectedIDs.count) Selected"
-  }
 }
 
 // MARK: - Body (needs its own type to access isSearching environment)
@@ -128,6 +130,22 @@ private struct HomeBodyView: View {
         mainGridView
       }
     }
+    .toolbar(.hidden, for: .bottomBar)
+    .navigationTitle(navigationTitle)
+    .navigationBarTitleDisplayMode(isSearching || viewModel.isSearchActive ? .inline : .large)
+  }
+
+  private var navigationTitle: String {
+    if viewModel.isSelectionMode {
+      return viewModel.selectedIDs.isEmpty
+        ? "Select Screenshots"
+        : "\(viewModel.selectedIDs.count) Selected"
+    }
+    if viewModel.isSearchActive {
+      let c = viewModel.searchResults.count
+      return "\(c) \(c == 1 ? "Result" : "Results")"
+    }
+    return "SnapFound"
   }
 
   // MARK: - Main Grid
@@ -258,7 +276,7 @@ private struct HomeBodyView: View {
       }
       .buttonStyle(.plain)
       .matchedTransitionSource(id: item.record.assetID, in: namespace)
-      .simultaneousGesture(
+      .highPriorityGesture(
         LongPressGesture(minimumDuration: 0.5)
           .onEnded { _ in
             viewModel.enterSelectionMode()
@@ -288,30 +306,23 @@ private struct HomeBodyView: View {
 
   private var suggestionsView: some View {
     ScrollView {
-      VStack(alignment: .leading, spacing: 16) {
-        Text("Suggestions")
-          .font(.subheadline.weight(.semibold))
-          .foregroundStyle(.secondary)
-          .padding(.horizontal, 16)
-
-        FlowLayout(spacing: 8) {
-          ForEach(searchSuggestions, id: \.self) { suggestion in
-            Button {
-              viewModel.searchText = suggestion
-            } label: {
-              Text(suggestion)
-                .font(.subheadline)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(.quaternary, in: Capsule())
-                .foregroundStyle(.primary)
-            }
-            .buttonStyle(.plain)
+      FlowLayout(spacing: 8) {
+        ForEach(searchSuggestions, id: \.self) { suggestion in
+          Button {
+            viewModel.searchText = suggestion
+          } label: {
+            Label(suggestion, systemImage: "magnifyingglass")
+              .font(.subheadline)
+              .padding(.horizontal, 14)
+              .padding(.vertical, 8)
+              .background(.quaternary, in: Capsule())
+              .foregroundStyle(.primary)
           }
+          .buttonStyle(.plain)
         }
-        .padding(.horizontal, 16)
       }
-      .padding(.top, 16)
+      .padding(.horizontal, 16)
+      .padding(.top, 12)
     }
   }
 
