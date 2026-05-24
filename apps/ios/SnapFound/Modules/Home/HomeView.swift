@@ -11,7 +11,6 @@ struct HomeView: View {
   @AppStorage("gridZoomLevel") private var zoomLevelRaw = GridZoomLevel.comfortable.rawValue
   @State private var viewModel = HomeViewModel()
   @State private var showOnboarding = false
-  @Namespace private var zoomNamespace
 
   private var zoomLevel: GridZoomLevel {
     GridZoomLevel(rawValue: zoomLevelRaw) ?? .comfortable
@@ -23,15 +22,12 @@ struct HomeView: View {
         records: records,
         viewModel: viewModel,
         zoomLevel: zoomLevel,
-        zoomLevelRaw: $zoomLevelRaw,
-        namespace: zoomNamespace
+        zoomLevelRaw: $zoomLevelRaw
       )
       .navigationDestination(for: ScreenshotRecord.self) { record in
         DetailView(record: record, allRecords: records, onPageChanged: { assetID in
           viewModel.lastViewedAssetID = assetID
         })
-        // Use lastViewedAssetID so zoom-out targets the last swiped-to cell, not the original tap target.
-        .navigationTransition(.zoom(sourceID: viewModel.lastViewedAssetID ?? record.assetID, in: zoomNamespace))
       }
       .searchable(text: $viewModel.searchText, prompt: "Search screenshots…")
       .onChange(of: viewModel.searchText) {
@@ -112,7 +108,6 @@ private struct HomeBodyView: View {
   let viewModel: HomeViewModel
   let zoomLevel: GridZoomLevel
   @Binding var zoomLevelRaw: Int
-  let namespace: Namespace.ID
 
   @State private var pinchScale: CGFloat = 1.0
   @State private var isPinching = false
@@ -327,7 +322,6 @@ private struct HomeBodyView: View {
         )
       }
       .buttonStyle(.plain)
-      .matchedTransitionSource(id: item.record.assetID, in: namespace)
       .highPriorityGesture(
         LongPressGesture(minimumDuration: 0.5)
           .onEnded { _ in

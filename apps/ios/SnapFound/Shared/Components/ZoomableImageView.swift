@@ -28,21 +28,11 @@ struct ZoomableImageView: View {
           zoomScale: zoomScale,
           onSingleTap: { onSingleTap?() },
           onDoubleTap: doubleTap,
-          onVerticalChanged: { dy in
-            if dy > 0 {
-              dismissOffset = dy
-              onDismissProgress?(dismissProgress)
-            }
+          onVerticalChanged: { _ in
+            resetDismiss()
           },
-          onVerticalEnded: { dy, vy in
-            if dy < -50 {
-              // onSwipeUp?()
-              resetDismiss()
-            } else if dy > 100 || vy > 500 {
-              onDismiss?()
-            } else {
-              resetDismiss()
-            }
+          onVerticalEnded: { _, _ in
+            resetDismiss()
           }
         )
       }
