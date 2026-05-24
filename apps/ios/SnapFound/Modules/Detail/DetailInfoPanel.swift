@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 struct DetailInfoPanel: View {
@@ -121,4 +122,19 @@ private struct ShareSheet: UIViewControllerRepresentable {
   }
 
   func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+#Preview {
+  let record = ScreenshotRecord(
+    assetID: "preview-1",
+    creationDate: .now,
+    ocrText:
+      "Order confirmation #12345\nYour order has been placed successfully.\nEstimated delivery: 3-5 business days.",
+    tags: ["order", "confirmation", "shopping"],
+    width: 390,
+    height: 844,
+    thumbnailData: nil
+  )
+  DetailInfoPanel(record: record, image: nil, onDelete: {})
+    .modelContainer(for: ScreenshotRecord.self, inMemory: true)
 }

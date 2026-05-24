@@ -9,6 +9,7 @@ final class HomeViewModel {
   var searchText = ""
   var showPaywall = false
   var showSettings = false
+  var lastViewedAssetID: String?
 
   // Selection mode
   var isSelectionMode = false

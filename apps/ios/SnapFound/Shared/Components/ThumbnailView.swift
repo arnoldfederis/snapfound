@@ -19,3 +19,9 @@ struct ThumbnailView: View {
     }
   }
 }
+
+#Preview("No Image") {
+  ThumbnailView(data: nil)
+    .frame(width: 120, height: 180)
+    .clipShape(RoundedRectangle(cornerRadius: 10))
+}

@@ -53,3 +53,11 @@ struct DestructiveActionModal: View {
     .presentationDetents([.medium])
   }
 }
+
+#Preview {
+  DestructiveActionModal(
+    title: "Delete all indexed data?",
+    message: "This removes all OCR text and tags. Your photos are not affected.",
+    actionLabel: "Delete Index"
+  ) {}
+}

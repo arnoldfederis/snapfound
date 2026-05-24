@@ -25,25 +25,30 @@ struct SettingsView: View {
           Button("Done") { dismiss() }
         }
       }
-      .sheet(isPresented: $viewModel.showDeleteConfirmation) {
-        DestructiveActionModal(
-          title: "Delete all indexed data?",
-          message: "This removes all OCR text and tags. Your photos are not affected.",
-          actionLabel: "Delete Index"
-        ) {
+      .confirmationDialog(
+        "Delete all indexed data?",
+        isPresented: $viewModel.showDeleteConfirmation,
+        titleVisibility: .visible
+      ) {
+        Button("Delete Index", role: .destructive) {
           viewModel.deleteIndex(modelContext: modelContext)
         }
+        Button("Cancel", role: .cancel) {}
+      } message: {
+        Text("This removes all OCR text and tags. Your photos are not affected.")
       }
-      .sheet(isPresented: $viewModel.showRebuildConfirmation) {
-        DestructiveActionModal(
-          title: "Rebuild full index?",
-          message:
-            "All existing index data will be deleted and rebuilt from scratch. This may take a few minutes.",
-          actionLabel: "Rebuild Index"
-        ) {
+      .confirmationDialog(
+        "Rebuild full index?",
+        isPresented: $viewModel.showRebuildConfirmation,
+        titleVisibility: .visible
+      ) {
+        Button("Rebuild Index", role: .destructive) {
           viewModel.rebuildIndex(modelContext: modelContext, isPro: purchaseManager.isPro)
           dismiss()
         }
+        Button("Cancel", role: .cancel) {}
+      } message: {
+        Text("All existing index data will be deleted and rebuilt from scratch. This may take a few minutes.")
       }
       .sheet(isPresented: $showPaywall) {
         PaywallView()
@@ -149,4 +154,10 @@ extension Bundle {
     let build = infoDictionary?["CFBundleVersion"] as? String ?? "1"
     return "\(version) (\(build))"
   }
+}
+
+#Preview {
+  SettingsView()
+    .environment(PurchaseManager())
+    .modelContainer(for: ScreenshotRecord.self, inMemory: true)
 }

@@ -36,7 +36,7 @@ struct ZoomableImageView: View {
           },
           onVerticalEnded: { dy, vy in
             if dy < -50 {
-              onSwipeUp?()
+              // onSwipeUp?()
               resetDismiss()
             } else if dy > 100 || vy > 500 {
               onDismiss?()
@@ -208,4 +208,19 @@ private struct PhotoGestureOverlay: UIViewRepresentable {
       }
     }
   }
+}
+
+#Preview {
+  let size = CGSize(width: 390, height: 844)
+  let renderer = UIGraphicsImageRenderer(size: size)
+  let image = renderer.image { ctx in
+    UIColor.systemIndigo.setFill()
+    ctx.fill(CGRect(origin: .zero, size: size))
+    UIColor.white.withAlphaComponent(0.15).setFill()
+    ctx.fill(CGRect(x: 32, y: 120, width: 326, height: 48))
+    ctx.fill(CGRect(x: 32, y: 188, width: 200, height: 32))
+  }
+  return ZoomableImageView(image: image)
+    .background(.black)
+    .ignoresSafeArea()
 }

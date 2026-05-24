@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 struct ScreenshotGridCell: View {
@@ -77,4 +78,24 @@ struct ScreenshotGridCell: View {
     .accessibilityLabel("Screenshot from \(record.creationDate.shortDisplay)")
     .accessibilityAddTraits(isSelected ? .isSelected : [])
   }
+}
+
+#Preview {
+  let record = ScreenshotRecord(
+    assetID: "preview-1",
+    creationDate: .now,
+    ocrText: "Wi-Fi password: hello123",
+    tags: ["wifi", "password"],
+    width: 390,
+    height: 844,
+    thumbnailData: nil
+  )
+  HStack(spacing: 12) {
+    ScreenshotGridCell(record: record, matchedTerms: ["wifi"])
+      .frame(width: 130)
+    ScreenshotGridCell(record: record, isSelected: true)
+      .frame(width: 130)
+  }
+  .padding()
+  .modelContainer(for: ScreenshotRecord.self, inMemory: true)
 }

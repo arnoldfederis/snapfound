@@ -186,3 +186,9 @@ struct PhotoCarouselView: UIViewRepresentable {
     }
   }
 }
+
+#Preview {
+  PhotoCarouselView(records: [])
+    .frame(height: 280)
+    .modelContainer(for: ScreenshotRecord.self, inMemory: true)
+}

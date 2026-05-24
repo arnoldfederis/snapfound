@@ -202,3 +202,8 @@ private struct FeatureRow: View {
     .padding(.vertical, 14)
   }
 }
+
+#Preview {
+  PaywallView()
+    .environment(PurchaseManager())
+}

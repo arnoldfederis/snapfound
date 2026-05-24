@@ -27,8 +27,10 @@ struct HomeView: View {
         namespace: zoomNamespace
       )
       .navigationDestination(for: ScreenshotRecord.self) { record in
-        DetailView(record: record, allRecords: records)
-          .navigationTransition(.zoom(sourceID: record.assetID, in: zoomNamespace))
+        DetailView(record: record, allRecords: records, onPageChanged: { assetID in
+          viewModel.lastViewedAssetID = assetID
+        })
+        .navigationTransition(.zoom(sourceID: record.assetID, in: zoomNamespace))
       }
       .searchable(text: $viewModel.searchText, prompt: "Search screenshots…")
       .onChange(of: viewModel.searchText) {
@@ -151,35 +153,42 @@ private struct HomeBodyView: View {
   // MARK: - Main Grid
 
   private var mainGridView: some View {
-    ScrollView {
-      VStack(spacing: 16) {
-        indexingStatusBanner
-        limitedAccessBanner
-        freeLimitBanner
+    ScrollViewReader { proxy in
+      ScrollView {
+        VStack(spacing: 16) {
+          indexingStatusBanner
+          limitedAccessBanner
+          freeLimitBanner
 
-        if records.isEmpty {
-          noScreenshotsEmptyState
-        } else if zoomLevel.isGrouped {
-          groupedGridView
-        } else {
-          flatGrid(items: records.map { CellItem(record: $0, terms: []) })
-        }
-      }
-      .padding(.horizontal, zoomLevel == .compact ? 6 : 16)
-      .padding(.top, 8)
-    }
-    .gesture(
-      MagnifyGesture()
-        .onEnded { value in
-          if value.magnification > 1.3, let coarser = zoomLevel.coarser {
-            zoomLevelRaw = coarser.rawValue
-            Haptics.selection()
-          } else if value.magnification < 0.75, let finer = zoomLevel.finer {
-            zoomLevelRaw = finer.rawValue
-            Haptics.selection()
+          if records.isEmpty {
+            noScreenshotsEmptyState
+          } else if zoomLevel.isGrouped {
+            groupedGridView
+          } else {
+            flatGrid(items: records.map { CellItem(record: $0, terms: []) })
           }
         }
-    )
+        .padding(.horizontal, zoomLevel == .compact ? 6 : 16)
+        .padding(.top, 8)
+      }
+      .simultaneousGesture(
+        MagnifyGesture()
+          .onEnded { value in
+            if value.magnification > 1.3, let coarser = zoomLevel.coarser {
+              zoomLevelRaw = coarser.rawValue
+              Haptics.selection()
+            } else if value.magnification < 0.75, let finer = zoomLevel.finer {
+              zoomLevelRaw = finer.rawValue
+              Haptics.selection()
+            }
+          }
+      )
+      .onAppear {
+        if let id = viewModel.lastViewedAssetID {
+          proxy.scrollTo(id, anchor: .center)
+        }
+      }
+    }
   }
 
   // MARK: - Grouped View (months / years)
@@ -191,6 +200,7 @@ private struct HomeBodyView: View {
           LazyVGrid(columns: gridColumns(for: .comfortable), spacing: 10) {
             ForEach(group.records, id: \.assetID) { record in
               cell(for: CellItem(record: record, terms: []))
+                .id(record.assetID)
             }
           }
           .padding(.horizontal, 16)
@@ -240,6 +250,7 @@ private struct HomeBodyView: View {
     LazyVGrid(columns: gridColumns(for: zoomLevel), spacing: zoomLevel.spacing) {
       ForEach(items, id: \.record.assetID) { item in
         cell(for: item)
+          .id(item.record.assetID)
       }
     }
   }
@@ -526,4 +537,24 @@ private struct LimitedAccessBanner: View {
     .padding(12)
     .background(.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
   }
+}
+
+// MARK: - Previews
+
+#Preview("Empty") {
+  HomeView()
+    .environment(PurchaseManager())
+    .modelContainer(for: ScreenshotRecord.self, inMemory: true)
+}
+
+#Preview("Banners") {
+  VStack(spacing: 12) {
+    StatusBanner(
+      icon: "photo.stack", title: "Tap the settings gear to index your screenshots", color: .blue)
+    IndexingProgressBanner(
+      progress: IndexingProgress(total: 120, completed: 45, currentAssetID: nil))
+    PermissionDeniedBanner()
+    LimitedAccessBanner()
+  }
+  .padding()
 }
