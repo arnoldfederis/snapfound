@@ -30,7 +30,8 @@ struct HomeView: View {
         DetailView(record: record, allRecords: records, onPageChanged: { assetID in
           viewModel.lastViewedAssetID = assetID
         })
-        .navigationTransition(.zoom(sourceID: record.assetID, in: zoomNamespace))
+        // Use lastViewedAssetID so zoom-out targets the last swiped-to cell, not the original tap target.
+        .navigationTransition(.zoom(sourceID: viewModel.lastViewedAssetID ?? record.assetID, in: zoomNamespace))
       }
       .searchable(text: $viewModel.searchText, prompt: "Search screenshots…")
       .onChange(of: viewModel.searchText) {
@@ -113,8 +114,17 @@ private struct HomeBodyView: View {
   @Binding var zoomLevelRaw: Int
   let namespace: Namespace.ID
 
+  @State private var pinchScale: CGFloat = 1.0
+  @State private var isPinching = false
+
   @Environment(PurchaseManager.self) private var purchaseManager
   @Environment(\.isSearching) private var isSearching
+
+  // Live column count during pinch: scales current level's count by the inverse of pinchScale.
+  private var liveColumnCount: Int {
+    guard let base = zoomLevel.columnCount else { return 3 }
+    return max(2, min(5, Int((CGFloat(base) / pinchScale).rounded())))
+  }
 
   private let searchSuggestions = [
     "Receipts", "Wi-Fi password", "Flight", "Hotel booking",
@@ -173,13 +183,38 @@ private struct HomeBodyView: View {
       }
       .simultaneousGesture(
         MagnifyGesture()
+          .onChanged { value in
+            isPinching = true
+            pinchScale = value.magnification
+          }
           .onEnded { value in
-            if value.magnification > 1.3, let coarser = zoomLevel.coarser {
-              zoomLevelRaw = coarser.rawValue
-              Haptics.selection()
-            } else if value.magnification < 0.75, let finer = zoomLevel.finer {
-              zoomLevelRaw = finer.rawValue
-              Haptics.selection()
+            isPinching = false
+            pinchScale = 1.0
+            if !zoomLevel.isGrouped, let base = zoomLevel.columnCount {
+              // Map the live column count to the nearest standard zoom level.
+              let rawCount = CGFloat(base) / value.magnification
+              let targetCount = max(2, min(5, Int(rawCount.rounded())))
+              let targetLevel: GridZoomLevel =
+                targetCount <= 2 ? .large : targetCount <= 3 ? .comfortable : .compact
+              if targetLevel != zoomLevel {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                  zoomLevelRaw = targetLevel.rawValue
+                }
+                Haptics.selection()
+              }
+            } else {
+              // Grouped modes: step one level at a time.
+              if value.magnification > 1.3, let coarser = zoomLevel.coarser {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                  zoomLevelRaw = coarser.rawValue
+                }
+                Haptics.selection()
+              } else if value.magnification < 0.75, let finer = zoomLevel.finer {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                  zoomLevelRaw = finer.rawValue
+                }
+                Haptics.selection()
+              }
             }
           }
       )
@@ -256,7 +291,13 @@ private struct HomeBodyView: View {
   }
 
   private func gridColumns(for level: GridZoomLevel) -> [GridItem] {
-    let count = level.columnCount ?? 3
+    // During a pinch on a flat grid, use the live count so the grid reflows in real-time.
+    let count: Int
+    if isPinching && !zoomLevel.isGrouped {
+      count = liveColumnCount
+    } else {
+      count = level.columnCount ?? 3
+    }
     return Array(repeating: GridItem(.flexible(), spacing: level.spacing), count: count)
   }
 

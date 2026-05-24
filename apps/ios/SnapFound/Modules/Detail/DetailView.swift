@@ -55,14 +55,12 @@ struct DetailView: View {
 
   // MARK: - Pager
 
-  // Wraps mainPager with ignoresSafeArea only for height==0 fullscreen images.
-  @ViewBuilder
+  // .ignoresSafeArea(edges:) with an empty set is a no-op, so we keep the same
+  // view instance in both states — SwiftUI can then animate the safe-area inset
+  // change smoothly rather than destroying/recreating the view.
   private var pagerView: some View {
-    if isFullscreen && currentRecord.height == 0 {
-      mainPager.ignoresSafeArea()
-    } else {
-      mainPager
-    }
+    mainPager
+      .ignoresSafeArea(edges: isFullscreen && currentRecord.height == 0 ? .all : [])
   }
 
   private var mainPager: some View {
@@ -367,11 +365,17 @@ private struct FilmstripBar: View {
         }
       }
       .onEnded { value in
-        // Use predictedEndTranslation for momentum (roulette-style)
-        let predictedRaw = CGFloat(dragStartIndex) - value.predictedEndTranslation.width / totalItemWidth
-        let finalIndex = max(0, min(records.count - 1, Int(round(predictedRaw))))
+        // velocity.width is pts/s; divide by (totalItemWidth * 3) to get item count of momentum.
+        // This gives a roulette-style spin: fast flick travels many items, slow drag stops quickly.
+        let momentumItems = value.velocity.width / (totalItemWidth * 3)
+        let rawIndex = CGFloat(dragStartIndex) - value.translation.width / totalItemWidth - momentumItems
+        let finalIndex = max(0, min(records.count - 1, Int(round(rawIndex))))
 
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) {
+        // Duration scales with travel distance so the wheel "decelerates" naturally.
+        let travelItems = abs(CGFloat(finalIndex) - displayedIndex)
+        let duration = min(1.0, max(0.2, Double(travelItems) * 0.055 + 0.2))
+
+        withAnimation(.easeOut(duration: duration)) {
           displayedIndex = CGFloat(finalIndex)
         }
         withAnimation(.spring(response: 0.28, dampingFraction: 0.4)) {
