@@ -86,9 +86,10 @@ struct HomeView: View {
       }
       .fullScreenCover(isPresented: $showOnboarding) {
         OnboardingView {
-          hasSeenOnboarding = true
           showOnboarding = false
-          if records.isEmpty {
+          Task { @MainActor in
+            hasSeenOnboarding = true
+            guard records.isEmpty else { return }
             viewModel.startIndexing(
               modelContext: modelContext,
               isPro: purchaseManager.isPro
@@ -185,10 +186,12 @@ private struct HomeBodyView: View {
   private var mainGridView: some View {
     ScrollViewReader { proxy in
       ScrollView {
-        VStack(spacing: 16) {
-          indexingStatusBanner
-          limitedAccessBanner
-          freeLimitBanner
+        VStack {
+          Group {
+            indexingStatusBanner
+            limitedAccessBanner
+            freeLimitBanner
+          }.padding(.bottom, 8)
 
           if records.isEmpty {
             noScreenshotsEmptyState
@@ -198,12 +201,17 @@ private struct HomeBodyView: View {
             flatGrid(items: records.map { CellItem(record: $0, terms: []) })
           }
         }
+        .id("grid-top")
         .padding(.horizontal, zoomLevel == .compact ? 6 : 16)
-        .padding(.top, 8)
       }
       .onAppear {
         if let id = viewModel.lastViewedAssetID {
           proxy.scrollTo(id, anchor: .center)
+        }
+      }
+      .onChange(of: zoomLevelRaw) {
+        DispatchQueue.main.async {
+          proxy.scrollTo("grid-top", anchor: .top)
         }
       }
     }
