@@ -27,11 +27,15 @@ struct HomeView: View {
         isSearchPresented: $isSearchPresented
       )
       .navigationDestination(for: ScreenshotRecord.self) { record in
-        DetailView(record: record, allRecords: records, onPageChanged: { assetID in
-          viewModel.lastViewedAssetID = assetID
-        })
+        DetailView(
+          record: record, allRecords: records,
+          onPageChanged: { assetID in
+            viewModel.lastViewedAssetID = assetID
+          })
       }
-      .searchable(text: $viewModel.searchText, isPresented: $isSearchPresented, prompt: "Search screenshots…")
+      .searchable(
+        text: $viewModel.searchText, isPresented: $isSearchPresented, prompt: "Search screenshots…"
+      )
       .onChange(of: viewModel.searchText) {
         viewModel.search(in: records)
       }
@@ -83,6 +87,16 @@ struct HomeView: View {
       }
       .sheet(isPresented: $viewModel.showPaywall) {
         PaywallView()
+      }
+      .sheet(isPresented: $viewModel.showShareSheet, onDismiss: viewModel.clearShareState) {
+        ActivityShareSheet(items: viewModel.shareItems)
+      }
+      .alert("Couldn’t Prepare Share", isPresented: .constant(viewModel.shareErrorMessage != nil)) {
+        Button("OK", role: .cancel) {
+          viewModel.shareErrorMessage = nil
+        }
+      } message: {
+        Text(viewModel.shareErrorMessage ?? "The selected screenshots could not be loaded.")
       }
       .fullScreenCover(isPresented: $showOnboarding) {
         OnboardingView {
@@ -149,15 +163,33 @@ private struct HomeBodyView: View {
     }
     .toolbar {
       ToolbarItemGroup(placement: .bottomBar) {
-        Menu {
-          Picker("Grid Size", selection: $zoomLevelRaw) {
-            Label("4 Columns", systemImage: "square.grid.2x2").tag(GridZoomLevel.fine.rawValue)
-            Label("3 Columns", systemImage: "square.grid.2x2").tag(GridZoomLevel.comfortable.rawValue)
-            Label("2 Columns", systemImage: "rectangle.grid.1x2").tag(GridZoomLevel.large.rawValue)
+        if viewModel.isSelectionMode {
+          Button {
+            Task {
+              await viewModel.shareSelected(records: records)
+            }
+          } label: {
+            if viewModel.isPreparingShare {
+              Label("Preparing...", systemImage: "hourglass")
+            } else {
+              Label("Share", systemImage: "square.and.arrow.up")
+            }
           }
-        } label: {
-          Image(systemName: "square.grid.3x2")
+          .disabled(viewModel.selectedIDs.isEmpty || viewModel.isPreparingShare)
+        } else {
+          Menu {
+            Picker("Grid Size", selection: $zoomLevelRaw) {
+              Label("4 Columns", systemImage: "square.grid.2x2").tag(GridZoomLevel.fine.rawValue)
+              Label("3 Columns", systemImage: "square.grid.2x2").tag(
+                GridZoomLevel.comfortable.rawValue)
+              Label("2 Columns", systemImage: "rectangle.grid.1x2").tag(
+                GridZoomLevel.large.rawValue)
+            }
+          } label: {
+            Image(systemName: "square.grid.3x2")
+          }
         }
+
         Spacer()
         Button {
           isSearchPresented = true
@@ -345,7 +377,8 @@ private struct HomeBodyView: View {
 
   private var noScreenshotsEmptyStateDescription: String {
     if case .completed(0) = viewModel.indexingState {
-      return "SnapFound searches screenshots only. It did not find any accessible screenshots in Photos."
+      return
+        "SnapFound searches screenshots only. It did not find any accessible screenshots in Photos."
     }
     return "Open Settings and tap \"Index New Screenshots\" to start searching your screenshots."
   }
@@ -455,6 +488,16 @@ private struct HomeBodyView: View {
       }
     }
   }
+}
+
+private struct ActivityShareSheet: UIViewControllerRepresentable {
+  let items: [Any]
+
+  func makeUIViewController(context: Context) -> UIActivityViewController {
+    UIActivityViewController(activityItems: items, applicationActivities: nil)
+  }
+
+  func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Shared Banner Components

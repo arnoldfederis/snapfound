@@ -15,6 +15,10 @@ final class HomeViewModel {
   var isSelectionMode = false
   var selectedIDs: Set<String> = []
   var showDeleteSelected = false
+  var isPreparingShare = false
+  var showShareSheet = false
+  var shareItems: [UIImage] = []
+  var shareErrorMessage: String?
 
   private(set) var searchService = SearchService()
   private let indexingService = IndexingService.shared
@@ -98,5 +102,64 @@ final class HomeViewModel {
     try? modelContext.save()
     exitSelectionMode()
     Haptics.notification(.success)
+  }
+  
+  func shareSelected(records: [ScreenshotRecord]) async {
+    guard !isPreparingShare else { return }
+
+    let selectedRecords = records.filter { selectedIDs.contains($0.assetID) }
+    guard !selectedRecords.isEmpty else { return }
+
+    isPreparingShare = true
+    shareErrorMessage = nil
+    defer { isPreparingShare = false }
+
+    do {
+      let images = try await loadSelectedImages(from: selectedRecords)
+      guard !images.isEmpty else {
+        throw PhotoLibraryError.imageLoadFailed
+      }
+
+      shareItems = images
+      showShareSheet = true
+      Haptics.impact(.light)
+    } catch {
+      shareErrorMessage = error.localizedDescription
+      Haptics.notification(.error)
+    }
+  }
+
+  private func loadSelectedImages(from records: [ScreenshotRecord]) async throws -> [UIImage] {
+    let orderedData = try await withThrowingTaskGroup(of: (Int, Data).self) { group in
+      for (index, record) in records.enumerated() {
+        let assetID = record.assetID
+        group.addTask {
+          let data = try await PhotoLibraryService.shared.loadFullImageData(for: assetID)
+          return (index, data)
+        }
+      }
+
+      var results = Array<Data?>(repeating: nil, count: records.count)
+      for try await (index, data) in group {
+        results[index] = data
+      }
+      return results
+    }
+
+    let images = orderedData.compactMap { data -> UIImage? in
+      guard let data else { return nil }
+      return UIImage(data: data)
+    }
+
+    guard images.count == records.count else {
+      throw PhotoLibraryError.imageLoadFailed
+    }
+
+    return images
+  }
+
+  func clearShareState() {
+    shareItems = []
+    shareErrorMessage = nil
   }
 }
