@@ -64,7 +64,7 @@ struct HomeView: View {
               }
             } message: {
               Text(
-                "All existing index data will be deleted and rebuilt from scratch. This may take a few minutes."
+                "The selected screenshots will be removed from the local search index. Your photos will not be deleted."
               )
             }
           }
@@ -88,15 +88,24 @@ struct HomeView: View {
         OnboardingView {
           hasSeenOnboarding = true
           showOnboarding = false
+          if records.isEmpty {
+            viewModel.startIndexing(
+              modelContext: modelContext,
+              isPro: purchaseManager.isPro
+            )
+          }
         }
       }
       .onAppear {
-        if !hasSeenOnboarding { showOnboarding = true }
-        viewModel.onAppear(
-          modelContext: modelContext,
-          records: records,
-          isPro: purchaseManager.isPro
-        )
+        if !hasSeenOnboarding {
+          showOnboarding = true
+        } else {
+          viewModel.onAppear(
+            modelContext: modelContext,
+            records: records,
+            isPro: purchaseManager.isPro
+          )
+        }
       }
     }
   }
@@ -141,7 +150,6 @@ private struct HomeBodyView: View {
       ToolbarItemGroup(placement: .bottomBar) {
         Menu {
           Picker("Grid Size", selection: $zoomLevelRaw) {
-            Label("5 Columns", systemImage: "square.grid.3x2").tag(GridZoomLevel.compact.rawValue)
             Label("4 Columns", systemImage: "square.grid.2x2").tag(GridZoomLevel.fine.rawValue)
             Label("3 Columns", systemImage: "square.grid.2x2").tag(GridZoomLevel.comfortable.rawValue)
             Label("2 Columns", systemImage: "rectangle.grid.1x2").tag(GridZoomLevel.large.rawValue)
@@ -310,16 +318,28 @@ private struct HomeBodyView: View {
 
   private var noScreenshotsEmptyState: some View {
     ContentUnavailableView {
-      Label("No Screenshots Indexed", systemImage: "photo.on.rectangle.angled")
+      Label(noScreenshotsEmptyStateTitle, systemImage: "photo.on.rectangle.angled")
     } description: {
-      Text(
-        "Open Settings and tap \"Index New Screenshots\" to start searching your screenshots."
-      )
+      Text(noScreenshotsEmptyStateDescription)
     } actions: {
       Button("Open Settings") { viewModel.showSettings = true }
         .buttonStyle(.borderedProminent)
     }
     .padding(.top, 40)
+  }
+
+  private var noScreenshotsEmptyStateTitle: String {
+    if case .completed(0) = viewModel.indexingState {
+      return "No Screenshots Found"
+    }
+    return "No Screenshots Indexed"
+  }
+
+  private var noScreenshotsEmptyStateDescription: String {
+    if case .completed(0) = viewModel.indexingState {
+      return "SnapFound searches screenshots only. It did not find any accessible screenshots in Photos."
+    }
+    return "Open Settings and tap \"Index New Screenshots\" to start searching your screenshots."
   }
 
   // MARK: - Search Results
@@ -369,12 +389,20 @@ private struct HomeBodyView: View {
         title: "Indexing failed. Please try again in Settings.",
         color: .red
       )
+    case .paused(let reason):
+      StatusBanner(
+        icon: "pause.circle",
+        title: LocalizedStringKey(reason),
+        color: .orange
+      )
     case .idle where records.isEmpty:
       StatusBanner(
         icon: "photo.stack",
         title: "Tap the settings gear to index your screenshots",
         color: .blue
       )
+    case .freeLimitReached:
+      EmptyView()
     default:
       EmptyView()
     }
@@ -400,7 +428,7 @@ private struct HomeBodyView: View {
       } label: {
         HStack {
           Label(
-            "50 screenshots indexed — unlock unlimited",
+            "50 screenshots indexed - unlock unlimited",
             systemImage: "sparkles"
           )
           .font(.subheadline.weight(.medium))
@@ -470,7 +498,7 @@ private struct PermissionDeniedBanner: View {
         .foregroundStyle(.orange)
 
       Text(
-        "SnapFound needs access to your Photos library to index screenshots. All processing stays on your device — nothing is uploaded."
+        "SnapFound needs Photos access to index screenshots. All processing stays on your device and nothing is uploaded."
       )
       .font(.caption)
       .foregroundStyle(.secondary)

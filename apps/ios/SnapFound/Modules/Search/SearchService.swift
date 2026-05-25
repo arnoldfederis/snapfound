@@ -9,22 +9,37 @@ final class SearchService {
     "error": ["bug", "crash", "fail", "issue", "problem", "exception", "warning"],
     "message": ["text", "chat", "dm", "sms", "imessage", "whatsapp"],
     "code": ["programming", "swift", "python", "javascript", "xcode", "terminal"],
-    "money": ["price", "cost", "payment", "dollar", "usd", "buy", "purchase", "paid"],
+    "money": ["price", "cost", "payment", "dollar", "usd", "buy", "purchase", "paid", "finance"],
+    "finance": ["bank", "balance", "budget", "payment", "invoice", "receipt", "money"],
     "map": ["location", "directions", "navigate", "gps", "address", "route"],
     "settings": ["preferences", "configuration", "options", "toggle", "privacy"],
-    "note": ["notes", "memo", "reminder", "todo", "task"],
+    "note": ["notes", "memo", "reminder", "todo", "task", "meeting"],
+    "document": ["pdf", "form", "contract", "statement", "report", "notes"],
     "photo": ["image", "picture", "screenshot"],
+    "app": ["application", "settings", "profile", "account", "screen"],
     "social": ["twitter", "instagram", "facebook", "tiktok", "linkedin"],
     "health": ["steps", "calories", "workout", "heart", "sleep", "fitness"],
     "music": ["spotify", "apple music", "song", "album", "playlist", "podcast"],
     "wifi": ["wi-fi", "wireless", "network", "ssid", "password"],
+    "password": ["login", "passcode", "credential", "wifi", "wi-fi"],
+    "login": ["sign in", "password", "passcode", "verification", "otp", "2fa"],
     "otp": ["verification", "one-time", "2fa", "authenticator", "verify", "code"],
     "tracking": ["shipment", "delivery", "shipped", "package", "parcel", "courier"],
-    "order": ["invoice", "confirmation", "purchase", "receipt", "total"],
-    "receipt": ["invoice", "payment", "amount", "charged", "total"],
-    "flight": ["airline", "boarding", "departure", "arrival", "gate", "terminal"],
-    "hotel": ["reservation", "check-in", "checkout", "booking", "accommodation"],
+    "order": ["invoice", "confirmation", "purchase", "receipt", "total", "shopping"],
+    "receipt": ["invoice", "payment", "amount", "charged", "total", "order"],
+    "shopping": ["order", "cart", "checkout", "shipping", "delivery", "receipt"],
+    "travel": ["flight", "hotel", "booking", "reservation", "itinerary", "trip"],
+    "flight": ["airline", "boarding", "departure", "arrival", "gate", "terminal", "travel"],
+    "hotel": ["reservation", "check-in", "checkout", "booking", "accommodation", "travel"],
     "meeting": ["calendar", "agenda", "minutes", "notes", "call", "zoom", "teams"],
+    "calendar": ["meeting", "event", "appointment", "schedule", "reminder"],
+    "food": ["restaurant", "menu", "meal", "coffee", "delivery", "recipe"],
+    "meme": ["funny", "lol", "reaction", "caption", "relatable"],
+  ]
+
+  private let stopWords: Set<String> = [
+    "a", "an", "and", "about", "by", "for", "from", "in", "like", "me", "my",
+    "of", "on", "or", "the", "to", "with", "last", "this",
   ]
 
   func search(query: String, in records: [ScreenshotRecord]) {
@@ -63,8 +78,7 @@ final class SearchService {
     let lower = raw.lowercased()
     // Normalise wi-fi/wifi before tokenising
     let normalised =
-      lower
-      .replacingOccurrences(of: "wi-fi", with: "wifi")
+      normalizeForSearch(lower)
       .replacingOccurrences(of: "verification code", with: "otp")
       .replacingOccurrences(of: "tracking number", with: "tracking")
       .replacingOccurrences(of: "order confirmation", with: "order")
@@ -72,7 +86,7 @@ final class SearchService {
     let tokens =
       normalised
       .components(separatedBy: CharacterSet.alphanumerics.inverted)
-      .filter { !$0.isEmpty && $0.count > 1 }
+      .filter { !$0.isEmpty && $0.count > 1 && !stopWords.contains($0) }
 
     var expanded = Set(tokens)
     for token in tokens {
@@ -107,28 +121,28 @@ final class SearchService {
     var score = 0.0
     var matched: Set<String> = []
 
-    let ocrLower = record.ocrText.lowercased()
-    let tagsLower = Set(record.tags.map { $0.lowercased() })
+    let searchableText = normalizeForSearch(record.ocrText)
+    let tagsLower = Set(record.tags.map { normalizeForSearch($0) })
+
+    // TODO: Semantic embeddings can replace this keyword expansion with local vector search.
 
     // Date filter
     if let filter = query.dateFilter {
-      if matchesDate(record.creationDate, filter: filter) {
-        score += 3.0
-        matched.insert("date")
-      } else if query.tokens.count == 1 {
+      guard matchesDate(record.creationDate, filter: filter) else {
         return (0, [])
       }
+      score += 3.0
+      matched.insert("date")
     }
 
     // Exact phrase match (highest weight)
-    if ocrLower.contains(query.originalText.lowercased()) {
+    if searchableText.contains(normalizeForSearch(query.originalText)) {
       score += 6.0
-      matched.insert(query.originalText)
     }
 
     // Original token matching in OCR (higher weight)
     for token in query.tokens {
-      if ocrLower.contains(token) {
+      if searchableText.contains(token) {
         score += token.count > 4 ? 3.0 : 2.0
         matched.insert(token)
       }
@@ -142,20 +156,17 @@ final class SearchService {
       }
     }
 
-    // Require at least one direct token match before applying synonym expansion
-    let hasDirectMatch = !matched.isEmpty || query.dateFilter != nil
-    guard hasDirectMatch else { return (0, []) }
-
-    // Synonym-expanded tokens (lower weight, only boosts existing matches)
+    // Synonym-expanded tokens (lower weight than original query terms)
     let synonymTokens = query.expandedTokens.filter { !query.tokens.contains($0) }
     for token in synonymTokens {
-      if ocrLower.contains(token) {
+      let normalizedToken = normalizeMatchTerm(token)
+      if searchableText.contains(normalizedToken) {
         score += token.count > 4 ? 1.0 : 0.5
-        matched.insert(token)
+        matched.insert(normalizedToken)
       }
-      if tagsLower.contains(token) {
+      if tagsLower.contains(normalizedToken) {
         score += 1.5
-        matched.insert(token)
+        matched.insert(normalizedToken)
       }
     }
 
@@ -163,7 +174,35 @@ final class SearchService {
     let daysSinceCapture = Date().timeIntervalSince(record.creationDate) / 86400
     if daysSinceCapture < 7 { score += 0.5 }
 
-    return (score, Array(matched))
+    return (score, orderedMatchedTerms(from: matched, query: query))
+  }
+
+  private func normalizeForSearch(_ text: String) -> String {
+    text
+      .lowercased()
+      .replacingOccurrences(of: "wi-fi", with: "wifi")
+  }
+
+  private func normalizeMatchTerm(_ term: String) -> String {
+    normalizeForSearch(term)
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  private func orderedMatchedTerms(from matched: Set<String>, query: SearchQuery) -> [String] {
+    var ordered: [String] = []
+    var seen: Set<String> = []
+
+    for term in query.tokens + query.expandedTokens {
+      let normalized = normalizeMatchTerm(term)
+      guard matched.contains(normalized), seen.insert(normalized).inserted else { continue }
+      ordered.append(normalized)
+    }
+
+    for term in matched.sorted() where seen.insert(term).inserted {
+      ordered.append(term)
+    }
+
+    return ordered
   }
 
   private func matchesDate(_ date: Date, filter: DateFilter) -> Bool {

@@ -1,5 +1,6 @@
 @preconcurrency import Photos
 import SwiftUI
+internal import UIKit
 
 final class PhotoLibraryService {
   static let shared = PhotoLibraryService()
@@ -55,6 +56,26 @@ final class PhotoLibraryService {
     return assets
   }
 
+  func fetchScreenshot(localIdentifier: String) -> PhotoAsset? {
+    let result = PHAsset.fetchAssets(
+      withLocalIdentifiers: [localIdentifier],
+      options: nil
+    )
+    guard let asset = result.firstObject,
+      asset.mediaType == .image,
+      asset.mediaSubtypes.contains(.photoScreenshot)
+    else {
+      return nil
+    }
+
+    return PhotoAsset(
+      localIdentifier: asset.localIdentifier,
+      creationDate: asset.creationDate ?? Date(),
+      pixelWidth: asset.pixelWidth,
+      pixelHeight: asset.pixelHeight
+    )
+  }
+
   /// Returns JPEG Data — Sendable-safe for actor boundary crossing.
   func loadFullImageData(for assetID: String) async throws -> Data {
     let result = PHAsset.fetchAssets(
@@ -68,7 +89,7 @@ final class PhotoLibraryService {
     return try await withCheckedThrowingContinuation { continuation in
       let options = PHImageRequestOptions()
       options.deliveryMode = .highQualityFormat
-      options.isNetworkAccessAllowed = true
+      options.isNetworkAccessAllowed = false
       options.isSynchronous = false
       options.version = .current
 
@@ -155,7 +176,7 @@ final class PhotoLibraryService {
     return try await withCheckedThrowingContinuation { continuation in
       let options = PHImageRequestOptions()
       options.deliveryMode = .highQualityFormat
-      options.isNetworkAccessAllowed = true
+      options.isNetworkAccessAllowed = false
 
       nonisolated(unsafe) var delivered = false
 
@@ -179,6 +200,24 @@ final class PhotoLibraryService {
             throwing: PhotoLibraryError.imageLoadFailed
           )
         }
+      }
+    }
+  }
+
+  @MainActor
+  func openPhotosApp() async -> Bool {
+    for urlString in ["photos://", "photos-redirect://"] {
+      guard let url = URL(string: urlString) else { continue }
+      if await openURL(url) { return true }
+    }
+    return false
+  }
+
+  @MainActor
+  private func openURL(_ url: URL) async -> Bool {
+    await withCheckedContinuation { continuation in
+      UIApplication.shared.open(url, options: [:]) { didOpen in
+        continuation.resume(returning: didOpen)
       }
     }
   }

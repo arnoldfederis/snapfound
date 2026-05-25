@@ -37,12 +37,18 @@ final class IndexingService {
     // For free tier, cap total indexed (existing + new) at freeIndexLimit.
     let remainingSlots = isPro ? nil : max(0, Self.freeIndexLimit - existingCount)
     if let slots = remainingSlots, slots == 0 {
-      state = .completed(existingCount)
+      state = .freeLimitReached(existingCount)
       return
     }
 
-    let assets = photoService.fetchScreenshots(limit: remainingSlots)
-    let toIndex = assets.filter { !existingIDs.contains($0.localIdentifier) }
+    let assets = photoService.fetchScreenshots()
+    let newAssets = assets.filter { !existingIDs.contains($0.localIdentifier) }
+    let toIndex: [PhotoAsset]
+    if let remainingSlots {
+      toIndex = Array(newAssets.prefix(remainingSlots))
+    } else {
+      toIndex = newAssets
+    }
 
     guard !toIndex.isEmpty else {
       state = .completed(existingCount)
@@ -74,13 +80,44 @@ final class IndexingService {
       }
     }
 
+    let finalCount = existingCount + indexed
     progress = IndexingProgress(total: total, completed: total, currentAssetID: nil)
-    state = .completed(existingCount + indexed)
+    state = !isPro && finalCount >= Self.freeIndexLimit
+      ? .freeLimitReached(finalCount)
+      : .completed(finalCount)
   }
 
   func rebuildIndex(modelContext: ModelContext, isPro: Bool) async {
     deleteIndex(modelContext: modelContext)
     await indexScreenshots(modelContext: modelContext, isPro: isPro)
+  }
+
+  func reindex(record: ScreenshotRecord, modelContext: ModelContext) async throws {
+    guard let asset = photoService.fetchScreenshot(localIdentifier: record.assetID) else {
+      let error = IndexingError.assetUnavailable
+      state = .failed(error)
+      throw error
+    }
+
+    progress = IndexingProgress(total: 1, completed: 0, currentAssetID: asset.localIdentifier)
+    state = .indexing(progress)
+
+    do {
+      let updatedRecord = try await buildRecord(for: asset)
+      record.creationDate = updatedRecord.creationDate
+      record.ocrText = updatedRecord.ocrText
+      record.tags = updatedRecord.tags
+      record.width = updatedRecord.width
+      record.height = updatedRecord.height
+      record.thumbnailData = updatedRecord.thumbnailData
+      record.indexedAt = Date()
+      try modelContext.save()
+      progress = IndexingProgress(total: 1, completed: 1, currentAssetID: nil)
+      state = .completed(fetchExistingIDs(modelContext: modelContext).count)
+    } catch {
+      state = .failed(error)
+      throw error
+    }
   }
 
   func deleteIndex(modelContext: ModelContext) {
@@ -104,8 +141,12 @@ final class IndexingService {
     // OCR runs on OCRService actor's executor (off main thread).
     let ocrResult = try await ocrService.recognizeText(in: imageData)
 
-    let tagResult = taggingService.extractTags(from: ocrResult.text)
-    let thumbnailData = makeThumbnail(from: imageData)
+    let tagResult = taggingService.extractTags(
+      from: ocrResult.text,
+      width: asset.pixelWidth,
+      height: asset.pixelHeight
+    )
+    let thumbnailData = await makeThumbnail(from: imageData)
 
     return ScreenshotRecord(
       assetID: asset.localIdentifier,
@@ -118,13 +159,26 @@ final class IndexingService {
     )
   }
 
-  private nonisolated func makeThumbnail(from data: Data) -> Data? {
-    guard
-      let image = UIImage(data: data),
-      let thumb = image.preparingThumbnail(of: CGSize(width: 300, height: 300))
-    else {
-      return nil
+  private nonisolated func makeThumbnail(from data: Data) async -> Data? {
+    await Task.detached(priority: .utility) {
+      guard
+        let image = UIImage(data: data),
+        let thumb = image.preparingThumbnail(of: CGSize(width: 300, height: 300))
+      else {
+        return nil
+      }
+      return thumb.jpegData(compressionQuality: 0.7)
+    }.value
+  }
+}
+
+enum IndexingError: LocalizedError {
+  case assetUnavailable
+
+  var errorDescription: String? {
+    switch self {
+    case .assetUnavailable:
+      "This screenshot is no longer available in Photos."
     }
-    return thumb.jpegData(compressionQuality: 0.7)
   }
 }

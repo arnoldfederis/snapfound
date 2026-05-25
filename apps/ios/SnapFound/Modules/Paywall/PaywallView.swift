@@ -48,7 +48,7 @@ struct PaywallView: View {
       Text("SnapFound Pro")
         .font(.largeTitle.bold())
 
-      Text("Search all your screenshots,\nnot just 50.")
+      Text("Search every screenshot,\nnot just the first 50.")
         .font(.title3)
         .foregroundStyle(.secondary)
         .multilineTextAlignment(.center)
@@ -62,7 +62,7 @@ struct PaywallView: View {
       FeatureRow(
         icon: "photo.stack.fill",
         title: "Unlimited Screenshot Indexing",
-        subtitle: "Index your entire screenshot library — no cap"
+        subtitle: "Index your entire screenshot library - no cap"
       )
       Divider().padding(.leading, 52)
       FeatureRow(

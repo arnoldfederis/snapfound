@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+internal import UIKit
 
 @MainActor
 @Observable
@@ -26,5 +27,10 @@ final class SettingsViewModel {
     Task {
       await indexingService.rebuildIndex(modelContext: modelContext, isPro: isPro)
     }
+  }
+
+  func openAppSettings() {
+    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+    UIApplication.shared.open(url)
   }
 }

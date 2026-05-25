@@ -8,6 +8,7 @@ struct ThumbnailView: View {
       Image(uiImage: image)
         .resizable()
         .scaledToFill()
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     } else {
       Rectangle()
         .fill(.quaternary)

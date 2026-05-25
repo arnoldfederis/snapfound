@@ -16,15 +16,15 @@ struct OnboardingView: View {
     Page(
       icon: "magnifyingglass.circle.fill",
       iconColor: .blue,
-      title: "Find any screenshot\ninstantly.",
-      body: "SnapFound reads text from your screenshots so you can find them later."
+      title: "Search your screenshots\nlike magic.",
+      body: "SnapFound indexes screenshots only - not your full photo library."
     ),
     Page(
       icon: "lock.shield.fill",
       iconColor: .green,
       title: "Private by design",
       body:
-        "Your screenshots are never uploaded.\nOCR and search happen locally on your iPhone.\nNo account. No tracking. No cloud processing."
+        "Your screenshots never leave your iPhone.\nOCR and search happen locally.\nNo account. No tracking. No cloud processing."
     ),
     Page(
       icon: "iphone",

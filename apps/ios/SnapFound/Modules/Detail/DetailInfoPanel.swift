@@ -6,10 +6,14 @@ struct DetailInfoPanel: View {
   let image: UIImage?
   let onDelete: () -> Void
 
+  @Environment(\.modelContext) private var modelContext
   @Environment(\.dismiss) private var dismiss
   @State private var isCopied = false
   @State private var isSharePresented = false
-  @State private var showDeleteModal = false
+  @State private var showDeleteAlert = false
+  @State private var showPhotosOpenError = false
+  @State private var isReindexing = false
+  @State private var reindexErrorMessage: String?
 
   var body: some View {
     NavigationStack {
@@ -30,15 +34,19 @@ struct DetailInfoPanel: View {
     .sheet(isPresented: $isSharePresented) {
       ShareSheet(items: shareItems)
     }
-    .sheet(isPresented: $showDeleteModal) {
-      DestructiveActionModal(
-        title: "Delete from Index?",
-        message: "The index entry will be removed. Your original photo is not deleted.",
-        actionLabel: "Delete from Index"
-      ) {
+    .alert("Delete from Index?", isPresented: $showDeleteAlert) {
+      Button("Delete from Index", role: .destructive) {
         onDelete()
         dismiss()
       }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text("The index entry will be removed. Your original photo is not deleted.")
+    }
+    .alert("Couldn’t Open Photos", isPresented: $showPhotosOpenError) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text("Open the Photos app manually and look for this screenshot by its captured date.")
     }
   }
 
@@ -66,12 +74,7 @@ struct DetailInfoPanel: View {
           .textSelection(.enabled)
         Spacer()
         Button {
-          UIPasteboard.general.string = record.ocrText
-          isCopied = true
-          Task {
-            try? await Task.sleep(for: .seconds(2))
-            isCopied = false
-          }
+          copyExtractedText()
         } label: {
           Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
         }
@@ -101,15 +104,67 @@ struct DetailInfoPanel: View {
   private var actionsSection: some View {
     Section {
       Button {
+        copyExtractedText()
+      } label: {
+        Label(
+          isCopied ? "Copied Text" : "Copy Extracted Text",
+          systemImage: isCopied ? "checkmark" : "doc.on.doc")
+      }
+      .disabled(record.ocrText.isEmpty)
+
+      Button {
         isSharePresented = true
       } label: {
         Label("Share Screenshot", systemImage: "square.and.arrow.up")
       }
+      .disabled(shareItems.isEmpty)
+
+      Button {
+        reindexScreenshot()
+      } label: {
+        Label(
+          isReindexing ? "Re-indexing..." : "Re-index This Screenshot",
+          systemImage: "arrow.triangle.2.circlepath"
+        )
+      }
+      .disabled(isReindexing)
+
       Button(role: .destructive) {
         Haptics.notification(.warning)
-        showDeleteModal = true
+        showDeleteAlert = true
       } label: {
-        Label("Delete from Index", systemImage: "trash")
+        Label("Delete from Index", systemImage: "trash").foregroundStyle(.red)
+      }
+    } footer: {
+      if let reindexErrorMessage {
+        Text(reindexErrorMessage)
+          .foregroundStyle(.red)
+      }
+    }
+  }
+
+  private func copyExtractedText() {
+    guard !record.ocrText.isEmpty else { return }
+    UIPasteboard.general.string = record.ocrText
+    isCopied = true
+    Haptics.notification(.success)
+    Task {
+      try? await Task.sleep(for: .seconds(2))
+      isCopied = false
+    }
+  }
+
+  private func reindexScreenshot() {
+    isReindexing = true
+    reindexErrorMessage = nil
+    Task {
+      defer { isReindexing = false }
+      do {
+        try await IndexingService.shared.reindex(record: record, modelContext: modelContext)
+        Haptics.notification(.success)
+      } catch {
+        reindexErrorMessage = error.localizedDescription
+        Haptics.notification(.error)
       }
     }
   }

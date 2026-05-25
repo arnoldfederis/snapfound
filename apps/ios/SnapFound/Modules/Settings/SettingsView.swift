@@ -25,11 +25,7 @@ struct SettingsView: View {
           Button("Done") { dismiss() }
         }
       }
-      .confirmationDialog(
-        "Delete all indexed data?",
-        isPresented: $viewModel.showDeleteConfirmation,
-        titleVisibility: .visible
-      ) {
+      .alert("Delete all indexed data?", isPresented: $viewModel.showDeleteConfirmation) {
         Button("Delete Index", role: .destructive) {
           viewModel.deleteIndex(modelContext: modelContext)
         }
@@ -37,12 +33,8 @@ struct SettingsView: View {
       } message: {
         Text("This removes all OCR text and tags. Your photos are not affected.")
       }
-      .confirmationDialog(
-        "Rebuild full index?",
-        isPresented: $viewModel.showRebuildConfirmation,
-        titleVisibility: .visible
-      ) {
-        Button("Rebuild Index", role: .destructive) {
+      .alert("Re-index screenshots?", isPresented: $viewModel.showRebuildConfirmation) {
+        Button("Re-index", role: .destructive) {
           viewModel.rebuildIndex(modelContext: modelContext, isPro: purchaseManager.isPro)
           dismiss()
         }
@@ -70,13 +62,19 @@ struct SettingsView: View {
           Text("Privacy First")
             .font(.headline)
           Text(
-            "All OCR and search processing happens entirely on this device. No data is ever sent to any server. No account required. No analytics."
+            "All OCR, tagging, indexing, and search processing happens entirely on this device."
           )
           .font(.caption)
           .foregroundStyle(.secondary)
         }
       }
       .padding(.vertical, 4)
+
+      PrivacyPromiseRow(icon: "icloud.slash", text: "No cloud processing")
+      PrivacyPromiseRow(icon: "hand.raised.slash", text: "No tracking")
+      PrivacyPromiseRow(icon: "person.crop.circle.badge.xmark", text: "No account required")
+      PrivacyPromiseRow(icon: "iphone", text: "Your screenshots stay on your iPhone")
+      PrivacyPromiseRow(icon: "trash", text: "You can delete the local index anytime")
     }
   }
 
@@ -92,6 +90,12 @@ struct SettingsView: View {
         dismiss()
       } label: {
         Label("Index New Screenshots", systemImage: "arrow.clockwise")
+      }
+
+      Button {
+        viewModel.openAppSettings()
+      } label: {
+        Label("Manage Photos Permission", systemImage: "photo.badge.shield.exclamationmark")
       }
 
       Button {
@@ -115,7 +119,7 @@ struct SettingsView: View {
   private var proSection: some View {
     Section("Pro") {
       if purchaseManager.isPro {
-        Label("SnapFound Pro — Active", systemImage: "checkmark.seal.fill")
+        Label("SnapFound Pro - Active", systemImage: "checkmark.seal.fill")
           .foregroundStyle(.green)
       } else {
         Button {
@@ -123,13 +127,13 @@ struct SettingsView: View {
         } label: {
           Label("Unlock Unlimited Indexing", systemImage: "sparkles")
         }
+      }
 
-        Button {
-          Task { await purchaseManager.restorePurchases() }
-        } label: {
-          Label("Restore Purchase", systemImage: "arrow.clockwise.circle")
-            .foregroundStyle(.secondary)
-        }
+      Button {
+        Task { await purchaseManager.restorePurchases() }
+      } label: {
+        Label("Restore Purchase", systemImage: "arrow.clockwise.circle")
+          .foregroundStyle(.secondary)
       }
     }
   }
@@ -143,6 +147,17 @@ struct SettingsView: View {
         Label("Privacy Policy", systemImage: "hand.raised")
       }
     }
+  }
+}
+
+private struct PrivacyPromiseRow: View {
+  let icon: String
+  let text: String
+
+  var body: some View {
+    Label(text, systemImage: icon)
+      .font(.subheadline)
+      .foregroundStyle(.primary)
   }
 }
 

@@ -12,6 +12,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct SnapFoundApp: App {
+  // TODO: Add Shortcuts/App Intents support for quickly searching screenshots.
+  // TODO: Add duplicate screenshot cleanup, smart folders, and Widgets after the MVP index is stable.
   @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
   @State private var purchaseManager = PurchaseManager()
 

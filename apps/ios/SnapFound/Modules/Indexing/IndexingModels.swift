@@ -26,6 +26,8 @@ enum IndexingState {
   case requestingPermission
   case indexing(IndexingProgress)
   case completed(Int)
+  case freeLimitReached(Int)
+  case paused(String)
   case failed(Error)
   case permissionDenied
 }
