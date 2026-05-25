@@ -1,8 +1,18 @@
 import SwiftData
 import SwiftUI
 
+final class AppDelegate: NSObject, UIApplicationDelegate {
+  func application(
+    _ application: UIApplication,
+    supportedInterfaceOrientationsFor window: UIWindow?
+  ) -> UIInterfaceOrientationMask {
+    .portrait
+  }
+}
+
 @main
 struct SnapFoundApp: App {
+  @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
   @State private var purchaseManager = PurchaseManager()
 
   var sharedModelContainer: ModelContainer = {

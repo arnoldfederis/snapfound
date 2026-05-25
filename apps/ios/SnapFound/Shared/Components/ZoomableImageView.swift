@@ -17,6 +17,12 @@ struct ZoomableImageView: View {
     Image(uiImage: image)
       .resizable()
       .scaledToFit()
+      .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+      .overlay {
+        RoundedRectangle(cornerRadius: 24, style: .continuous)
+          .stroke(Color(.separator), lineWidth: 0.5)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
       .scaleEffect(visibleScale)
       .offset(visibleOffset)
       .gesture(magnifyGesture)

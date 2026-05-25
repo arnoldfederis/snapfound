@@ -9,21 +9,24 @@ enum GridZoomLevel: Int, CaseIterable {
   case large = 2
   /// 3-column default
   case comfortable = 3
+  /// 4-column medium
+  case fine = 4
   /// 5-column compact (finest)
-  case compact = 4
+  case compact = 5
 
   var columnCount: Int? {
     switch self {
     case .years, .months: return nil
     case .large: return 2
     case .comfortable: return 3
+    case .fine: return 4
     case .compact: return 5
     }
   }
 
   var spacing: CGFloat {
     switch self {
-    case .compact: return 4
+    case .compact, .fine: return 4
     case .large: return 8
     default: return 10
     }

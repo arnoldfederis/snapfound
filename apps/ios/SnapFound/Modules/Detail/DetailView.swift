@@ -16,8 +16,12 @@ struct DetailView: View {
   @State private var currentPageImage: UIImage?
   @State private var showInfo = false
   @State private var isFullscreen = false
+  @State private var showDeleteConfirm = false
 
-  init(record: ScreenshotRecord, allRecords: [ScreenshotRecord] = [], onPageChanged: ((String) -> Void)? = nil) {
+  init(
+    record: ScreenshotRecord, allRecords: [ScreenshotRecord] = [],
+    onPageChanged: ((String) -> Void)? = nil
+  ) {
     self.initialRecord = record
     self.onPageChanged = onPageChanged
     let list = allRecords.isEmpty ? [record] : allRecords
@@ -36,7 +40,8 @@ struct DetailView: View {
   private var shareMenuItems: some View {
     if let image = currentPageImage {
       let item = TransferableImage(uiImage: image)
-      let preview = SharePreview(currentRecord.creationDate.shortDisplay, image: Image(uiImage: image))
+      let preview = SharePreview(
+        currentRecord.creationDate.shortDisplay, image: Image(uiImage: image))
       if currentRecord.ocrText.isEmpty {
         ShareLink(item: item, preview: preview) {
           Label("Share", systemImage: "square.and.arrow.up")
@@ -70,6 +75,7 @@ struct DetailView: View {
             PhotoPageView(
               record: record,
               isFullscreen: isFullscreen,
+              isCurrentPage: idx == currentIndex,
               onSwipeUp: {
                 showInfo = true
                 Haptics.impact(.light)
@@ -87,8 +93,10 @@ struct DetailView: View {
                 withAnimation(.easeInOut(duration: 0.25)) { isFullscreen.toggle() }
               }
             )
+            .padding(.horizontal, record.height > 0 ? 16 : 0)
             .frame(width: geo.size.width, height: geo.size.height)
             .id(record.assetID)
+            
           }
         }
         .scrollTargetLayout()
@@ -97,7 +105,8 @@ struct DetailView: View {
       .scrollIndicators(.hidden)
       .scrollPosition(id: $scrollPositionID)
       .onChange(of: scrollPositionID) { _, id in
-        guard let id, let idx = records.firstIndex(where: { $0.assetID == id }), idx != currentIndex else { return }
+        guard let id, let idx = records.firstIndex(where: { $0.assetID == id }), idx != currentIndex
+        else { return }
         currentIndex = idx
       }
       .onChange(of: currentIndex) { _, idx in
@@ -122,7 +131,7 @@ struct DetailView: View {
       }
       .navigationBarTitleDisplayMode(.inline)
       .toolbar(isFullscreen ? .hidden : .visible, for: .navigationBar)
-      .toolbar(.hidden, for: .bottomBar)
+      .toolbar(isFullscreen ? .hidden : .visible, for: .bottomBar)
       .toolbar {
         ToolbarItem(placement: .principal) {
           Button {
@@ -143,17 +152,36 @@ struct DetailView: View {
           .buttonStyle(.glass)
         }
         ToolbarItem(placement: .topBarTrailing) {
-          Menu {
-            shareMenuItems
-            Button(role: .destructive) {
+          Button {
+            showInfo = true
+            Haptics.impact(.light)
+          } label: {
+            Image(systemName: "info.circle")
+          }
+        }
+        ToolbarItemGroup(placement: .bottomBar) {
+          shareMenuItems
+          Spacer()
+          Button {
+            showDeleteConfirm = true
+            Haptics.notification(.warning)
+          } label: {
+            Label("Remove from Index", systemImage: "trash")
+          }
+          .tint(.red)
+          .confirmationDialog(
+            "Remove from Index?",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+          ) {
+            Button("Remove", role: .destructive) {
               modelContext.delete(currentRecord)
               try? modelContext.save()
               dismiss()
-            } label: {
-              Label("Remove from Index", systemImage: "trash")
             }
-          } label: {
-            Image(systemName: "ellipsis.circle")
+            Button("Cancel", role: .cancel) {}
+          } message: {
+            Text("This screenshot will be removed from the search index.")
           }
         }
       }
@@ -184,6 +212,7 @@ private struct TransferableImage: Transferable {
 private struct PhotoPageView: View {
   let record: ScreenshotRecord
   let isFullscreen: Bool
+  let isCurrentPage: Bool
   let onSwipeUp: () -> Void
   let onDismiss: () -> Void
   let onDismissProgress: (Double) -> Void
@@ -228,9 +257,13 @@ private struct PhotoPageView: View {
       }
     }
     .task {
-      guard viewModel.fullImage == nil else { return }
-      await viewModel.loadImage(for: record)
+      if viewModel.fullImage == nil {
+        await viewModel.loadImage(for: record)
+      }
       if let img = viewModel.fullImage { onImageLoaded(img) }
+    }
+    .onChange(of: isCurrentPage) { _, isCurrent in
+      if isCurrent, let img = viewModel.fullImage { onImageLoaded(img) }
     }
   }
 }

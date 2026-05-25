@@ -11,6 +11,7 @@ struct HomeView: View {
   @AppStorage("gridZoomLevel") private var zoomLevelRaw = GridZoomLevel.comfortable.rawValue
   @State private var viewModel = HomeViewModel()
   @State private var showOnboarding = false
+  @State private var isSearchPresented = false
 
   private var zoomLevel: GridZoomLevel {
     GridZoomLevel(rawValue: zoomLevelRaw) ?? .comfortable
@@ -22,14 +23,15 @@ struct HomeView: View {
         records: records,
         viewModel: viewModel,
         zoomLevel: zoomLevel,
-        zoomLevelRaw: $zoomLevelRaw
+        zoomLevelRaw: $zoomLevelRaw,
+        isSearchPresented: $isSearchPresented
       )
       .navigationDestination(for: ScreenshotRecord.self) { record in
         DetailView(record: record, allRecords: records, onPageChanged: { assetID in
           viewModel.lastViewedAssetID = assetID
         })
       }
-      .searchable(text: $viewModel.searchText, prompt: "Search screenshots…")
+      .searchable(text: $viewModel.searchText, isPresented: $isSearchPresented, prompt: "Search screenshots…")
       .onChange(of: viewModel.searchText) {
         viewModel.search(in: records)
       }
@@ -108,18 +110,9 @@ private struct HomeBodyView: View {
   let viewModel: HomeViewModel
   let zoomLevel: GridZoomLevel
   @Binding var zoomLevelRaw: Int
-
-  @State private var pinchScale: CGFloat = 1.0
-  @State private var isPinching = false
+  @Binding var isSearchPresented: Bool
 
   @Environment(PurchaseManager.self) private var purchaseManager
-  @Environment(\.isSearching) private var isSearching
-
-  // Live column count during pinch: scales current level's count by the inverse of pinchScale.
-  private var liveColumnCount: Int {
-    guard let base = zoomLevel.columnCount else { return 3 }
-    return max(2, min(5, Int((CGFloat(base) / pinchScale).rounded())))
-  }
 
   private let searchSuggestions = [
     "Receipts", "Wi-Fi password", "Flight", "Hotel booking",
@@ -131,15 +124,39 @@ private struct HomeBodyView: View {
     Group {
       if viewModel.isSearchActive {
         searchResultsView
-      } else if isSearching {
-        suggestionsView
       } else {
         mainGridView
       }
     }
-    .toolbar(.hidden, for: .bottomBar)
     .navigationTitle(navigationTitle)
-    .navigationBarTitleDisplayMode(isSearching || viewModel.isSearchActive ? .inline : .large)
+    .searchSuggestions {
+      if viewModel.searchText.isEmpty {
+        ForEach(searchSuggestions, id: \.self) { suggestion in
+          Label(suggestion, systemImage: "magnifyingglass")
+            .searchCompletion(suggestion)
+        }
+      }
+    }
+    .toolbar {
+      ToolbarItemGroup(placement: .bottomBar) {
+        Menu {
+          Picker("Grid Size", selection: $zoomLevelRaw) {
+            Label("5 Columns", systemImage: "square.grid.3x2").tag(GridZoomLevel.compact.rawValue)
+            Label("4 Columns", systemImage: "square.grid.2x2").tag(GridZoomLevel.fine.rawValue)
+            Label("3 Columns", systemImage: "square.grid.2x2").tag(GridZoomLevel.comfortable.rawValue)
+            Label("2 Columns", systemImage: "rectangle.grid.1x2").tag(GridZoomLevel.large.rawValue)
+          }
+        } label: {
+          Image(systemName: "square.grid.3x2")
+        }
+        Spacer()
+        Button {
+          isSearchPresented = true
+        } label: {
+          Image(systemName: "magnifyingglass")
+        }
+      }
+    }
   }
 
   private var navigationTitle: String {
@@ -176,44 +193,6 @@ private struct HomeBodyView: View {
         .padding(.horizontal, zoomLevel == .compact ? 6 : 16)
         .padding(.top, 8)
       }
-      .simultaneousGesture(
-        MagnifyGesture()
-          .onChanged { value in
-            isPinching = true
-            pinchScale = value.magnification
-          }
-          .onEnded { value in
-            var newRaw = zoomLevelRaw
-            var didChange = false
-
-            if !zoomLevel.isGrouped, let base = zoomLevel.columnCount {
-              let rawCount = CGFloat(base) / value.magnification
-              let targetCount = max(2, min(5, Int(rawCount.rounded())))
-              let targetLevel: GridZoomLevel =
-                targetCount <= 2 ? .large : targetCount <= 3 ? .comfortable : .compact
-              if targetLevel != zoomLevel {
-                newRaw = targetLevel.rawValue
-                didChange = true
-              }
-            } else {
-              if value.magnification > 1.3, let coarser = zoomLevel.coarser {
-                newRaw = coarser.rawValue
-                didChange = true
-              } else if value.magnification < 0.75, let finer = zoomLevel.finer {
-                newRaw = finer.rawValue
-                didChange = true
-              }
-            }
-
-            withAnimation(.easeOut(duration: 0.25)) {
-              isPinching = false
-              pinchScale = 1.0
-              zoomLevelRaw = newRaw
-            }
-
-            if didChange { Haptics.selection() }
-          }
-      )
       .onAppear {
         if let id = viewModel.lastViewedAssetID {
           proxy.scrollTo(id, anchor: .center)
@@ -287,13 +266,7 @@ private struct HomeBodyView: View {
   }
 
   private func gridColumns(for level: GridZoomLevel) -> [GridItem] {
-    // During a pinch on a flat grid, use the live count so the grid reflows in real-time.
-    let count: Int
-    if isPinching && !zoomLevel.isGrouped {
-      count = liveColumnCount
-    } else {
-      count = level.columnCount ?? 3
-    }
+    let count = level.columnCount ?? 3
     return Array(repeating: GridItem(.flexible(), spacing: level.spacing), count: count)
   }
 
@@ -347,30 +320,6 @@ private struct HomeBodyView: View {
         .buttonStyle(.borderedProminent)
     }
     .padding(.top, 40)
-  }
-
-  // MARK: - Search Suggestions
-
-  private var suggestionsView: some View {
-    ScrollView {
-      FlowLayout(spacing: 8) {
-        ForEach(searchSuggestions, id: \.self) { suggestion in
-          Button {
-            viewModel.searchText = suggestion
-          } label: {
-            Label(suggestion, systemImage: "magnifyingglass")
-              .font(.subheadline)
-              .padding(.horizontal, 14)
-              .padding(.vertical, 8)
-              .background(.quaternary, in: Capsule())
-              .foregroundStyle(.primary)
-          }
-          .buttonStyle(.plain)
-        }
-      }
-      .padding(.horizontal, 16)
-      .padding(.top, 12)
-    }
   }
 
   // MARK: - Search Results
