@@ -63,53 +63,54 @@ struct DetailView: View {
   }
 
   private var mainPager: some View {
-    ScrollView(.horizontal) {
-      LazyHStack(spacing: 0) {
-        ForEach(Array(records.enumerated()), id: \.element.assetID) { idx, record in
-          PhotoPageView(
-            record: record,
-            isFullscreen: isFullscreen,
-            onSwipeUp: {
-              showInfo = true
-              Haptics.impact(.light)
-            },
-            onDismiss: { dismiss() },
-            onDismissProgress: { progress in
-              backgroundOpacity = max(0.05, 1 - progress * 0.85)
-            },
-            onImageLoaded: { img in
-              if idx == currentIndex { currentPageImage = img }
-            },
-            onSingleTap: {
-              // Only height==0 images (unknown aspect) toggle fullscreen
-              guard record.height == 0 else { return }
-              withAnimation(.easeInOut(duration: 0.25)) { isFullscreen.toggle() }
-            }
-          )
-          .containerRelativeFrame([.horizontal, .vertical])
-          .id(record.assetID)
+    GeometryReader { geo in
+      ScrollView(.horizontal) {
+        LazyHStack(spacing: 0) {
+          ForEach(Array(records.enumerated()), id: \.element.assetID) { idx, record in
+            PhotoPageView(
+              record: record,
+              isFullscreen: isFullscreen,
+              onSwipeUp: {
+                showInfo = true
+                Haptics.impact(.light)
+              },
+              onDismiss: { dismiss() },
+              onDismissProgress: { progress in
+                backgroundOpacity = max(0.05, 1 - progress * 0.85)
+              },
+              onImageLoaded: { img in
+                if idx == currentIndex { currentPageImage = img }
+              },
+              onSingleTap: {
+                // Only height==0 images (unknown aspect) toggle fullscreen
+                guard record.height == 0 else { return }
+                withAnimation(.easeInOut(duration: 0.25)) { isFullscreen.toggle() }
+              }
+            )
+            .frame(width: geo.size.width, height: geo.size.height)
+            .id(record.assetID)
+          }
         }
+        .scrollTargetLayout()
       }
-      .scrollTargetLayout()
-    }
-    .scrollTargetBehavior(.paging)
-    .scrollIndicators(.hidden)
-    .scrollPosition(id: $scrollPositionID)
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .onChange(of: scrollPositionID) { _, id in
-      guard let id, let idx = records.firstIndex(where: { $0.assetID == id }), idx != currentIndex else { return }
-      currentIndex = idx
-    }
-    .onChange(of: currentIndex) { _, idx in
-      currentPageImage = nil
-      guard idx >= 0, idx < records.count else { return }
-      let record = records[idx]
-      onPageChanged?(record.assetID)
-      if record.height > 0 { isFullscreen = false }
-      let newID = record.assetID
-      guard newID != scrollPositionID else { return }
-      withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-        scrollPositionID = newID
+      .scrollTargetBehavior(.paging)
+      .scrollIndicators(.hidden)
+      .scrollPosition(id: $scrollPositionID)
+      .onChange(of: scrollPositionID) { _, id in
+        guard let id, let idx = records.firstIndex(where: { $0.assetID == id }), idx != currentIndex else { return }
+        currentIndex = idx
+      }
+      .onChange(of: currentIndex) { _, idx in
+        currentPageImage = nil
+        guard idx >= 0, idx < records.count else { return }
+        let record = records[idx]
+        onPageChanged?(record.assetID)
+        if record.height > 0 { isFullscreen = false }
+        let newID = record.assetID
+        guard newID != scrollPositionID else { return }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+          scrollPositionID = newID
+        }
       }
     }
   }
@@ -119,9 +120,7 @@ struct DetailView: View {
       .onAppear {
         onPageChanged?(currentRecord.assetID)
       }
-      .navigationTitle(currentRecord.creationDate.shortDisplay)
       .navigationBarTitleDisplayMode(.inline)
-      .toolbarColorScheme(.dark, for: .navigationBar)
       .toolbar(isFullscreen ? .hidden : .visible, for: .navigationBar)
       .toolbar(.hidden, for: .bottomBar)
       .toolbar {

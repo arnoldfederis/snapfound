@@ -183,34 +183,35 @@ private struct HomeBodyView: View {
             pinchScale = value.magnification
           }
           .onEnded { value in
-            isPinching = false
-            pinchScale = 1.0
+            var newRaw = zoomLevelRaw
+            var didChange = false
+
             if !zoomLevel.isGrouped, let base = zoomLevel.columnCount {
-              // Map the live column count to the nearest standard zoom level.
               let rawCount = CGFloat(base) / value.magnification
               let targetCount = max(2, min(5, Int(rawCount.rounded())))
               let targetLevel: GridZoomLevel =
                 targetCount <= 2 ? .large : targetCount <= 3 ? .comfortable : .compact
               if targetLevel != zoomLevel {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-                  zoomLevelRaw = targetLevel.rawValue
-                }
-                Haptics.selection()
+                newRaw = targetLevel.rawValue
+                didChange = true
               }
             } else {
-              // Grouped modes: step one level at a time.
               if value.magnification > 1.3, let coarser = zoomLevel.coarser {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-                  zoomLevelRaw = coarser.rawValue
-                }
-                Haptics.selection()
+                newRaw = coarser.rawValue
+                didChange = true
               } else if value.magnification < 0.75, let finer = zoomLevel.finer {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-                  zoomLevelRaw = finer.rawValue
-                }
-                Haptics.selection()
+                newRaw = finer.rawValue
+                didChange = true
               }
             }
+
+            withAnimation(.easeOut(duration: 0.25)) {
+              isPinching = false
+              pinchScale = 1.0
+              zoomLevelRaw = newRaw
+            }
+
+            if didChange { Haptics.selection() }
           }
       )
       .onAppear {

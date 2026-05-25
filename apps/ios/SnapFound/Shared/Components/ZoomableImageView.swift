@@ -36,6 +36,7 @@ struct ZoomableImageView: View {
           }
         )
       }
+      .clipped()
   }
 
   private var visibleScale: CGFloat {
