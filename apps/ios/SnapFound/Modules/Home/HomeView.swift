@@ -101,7 +101,7 @@ struct HomeView: View {
         .animation(.snappy(duration: 0.25), value: libraryPath.isEmpty)
       }
 
-      Tab("Search", systemImage: "magnifyingglass", value: .search) {
+      Tab("Search", systemImage: "sparkle.magnifyingglass", value: .search) {
         NavigationStack(path: $searchPath) {
           SearchTabView(
             records: records,
@@ -128,7 +128,7 @@ struct HomeView: View {
         .animation(.snappy(duration: 0.25), value: searchPath.isEmpty)
       }
 
-      Tab("Settings", systemImage: "gearshape", value: .settings) {
+      Tab("Settings", systemImage: "gear", value: .settings) {
         NavigationStack {
           SettingsView()
         }
