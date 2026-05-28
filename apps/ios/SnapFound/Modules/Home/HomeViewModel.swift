@@ -97,9 +97,14 @@ final class HomeViewModel {
   }
 
   func deleteSelected(modelContext: ModelContext, records: [ScreenshotRecord]) {
-    let toDelete = records.filter { selectedIDs.contains($0.assetID) }
+    let deletedIDs = selectedIDs
+    let toDelete = records.filter { deletedIDs.contains($0.assetID) }
     for record in toDelete { modelContext.delete(record) }
     try? modelContext.save()
+    if isSearchActive {
+      let remainingRecords = records.filter { !deletedIDs.contains($0.assetID) }
+      search(in: remainingRecords)
+    }
     exitSelectionMode()
     Haptics.notification(.success)
   }

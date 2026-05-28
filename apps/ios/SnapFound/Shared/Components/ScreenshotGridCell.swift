@@ -20,44 +20,41 @@ struct ScreenshotGridCell: View {
     }
   }
 
-  @ViewBuilder
   private var thumbnailContent: some View {
-    if record.height > 0 {
-      Color.clear
-        .frame(maxWidth: .infinity)
-        .aspectRatio(9 / 16, contentMode: .fit)
-        .clipped()
-        .overlay {
-          ThumbnailView(data: record.thumbnailData)
-            .frame(maxWidth: .infinity)
-            .aspectRatio(CGFloat(record.width) / CGFloat(record.height), contentMode: .fit)
-            .clipped()
-        }
-    } else {
-      Color.clear
-        .frame(maxWidth: .infinity)
-        .aspectRatio(9 / 16, contentMode: .fit)
-        .overlay {
-          ThumbnailView(data: record.thumbnailData)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipped()
-        }
-    }
+    Color.clear
+      .aspectRatio(9.0 / 16.0, contentMode: .fit)
+      .overlay {
+        ThumbnailView(data: record.thumbnailData, height: record.height)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+      }
   }
 
   var body: some View {
     VStack(spacing: 0) {
       ZStack(alignment: .topLeading) {
         thumbnailContent
-          .padding(.top, 16)
           .clipShape(RoundedRectangle(cornerRadius: gridCornerRadius, style: .continuous))
 
         if isSelected {
           Image(systemName: "checkmark.circle.fill")
             .font(.title3)
-            .foregroundStyle(.white, .blue)
+            .foregroundStyle(.white, Color.accentColor)
             .padding(6)
         }
+      }
+      .background()
+      .clipShape(RoundedRectangle(cornerRadius: gridCornerRadius, style: .continuous))
+      .shadow(
+        color: .black.opacity(isSelected ? 0.0 : 0.06),
+        radius: 2,
+        y: 1
+      )
+      .overlay {
+        RoundedRectangle(cornerRadius: gridCornerRadius, style: .continuous)
+          .strokeBorder(
+            isSelected ? Color.accentColor : Color(.separator),
+            lineWidth: isSelected ? 3 : 0.5
+          )
       }
 
       Group {
@@ -70,8 +67,8 @@ struct ScreenshotGridCell: View {
                 .minimumScaleFactor(0.8)
                 .padding(.horizontal, 5)
                 .padding(.vertical, 2)
-                .background(Color(.secondarySystemFill), in: Capsule())
-                .foregroundStyle(.primary)
+                .background(Color.accentColor.opacity(0.15), in: Capsule())
+                .foregroundStyle(Color.accentColor)
             }
           }
           .padding(.horizontal, 6)
@@ -82,17 +79,6 @@ struct ScreenshotGridCell: View {
         }
       }
       .padding(.vertical, 8)
-    }
-    .background(.background)
-    .clipShape(RoundedRectangle(cornerRadius: gridCornerRadius))
-    .shadow(
-      color: .black.opacity(isSelected ? 0.04 : 0.08),
-      radius: isSelected ? 2 : 4,
-      y: isSelected ? 1 : 2
-    )
-    .overlay {
-      RoundedRectangle(cornerRadius: gridCornerRadius)
-        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
     }
     .accessibilityLabel("Screenshot from \(record.creationDate.shortDisplay)")
     .accessibilityAddTraits(isSelected ? .isSelected : [])

@@ -89,6 +89,7 @@ final class IndexingService {
 
   func rebuildIndex(modelContext: ModelContext, isPro: Bool) async {
     deleteIndex(modelContext: modelContext)
+    await Task.yield()
     await indexScreenshots(modelContext: modelContext, isPro: isPro)
   }
 
@@ -121,7 +122,11 @@ final class IndexingService {
   }
 
   func deleteIndex(modelContext: ModelContext) {
-    try? modelContext.delete(model: ScreenshotRecord.self)
+    let descriptor = FetchDescriptor<ScreenshotRecord>()
+    let records = (try? modelContext.fetch(descriptor)) ?? []
+    for record in records {
+      modelContext.delete(record)
+    }
     try? modelContext.save()
     state = .idle
     progress = .idle
@@ -146,7 +151,8 @@ final class IndexingService {
       width: asset.pixelWidth,
       height: asset.pixelHeight
     )
-    let thumbnailData = await makeThumbnail(from: imageData)
+    let maxDimension: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 1600 : 800
+    let thumbnailData = await makeThumbnail(from: imageData, maxDimension: maxDimension)
 
     return ScreenshotRecord(
       assetID: asset.localIdentifier,
@@ -159,15 +165,15 @@ final class IndexingService {
     )
   }
 
-  private nonisolated func makeThumbnail(from data: Data) async -> Data? {
+  private nonisolated func makeThumbnail(from data: Data, maxDimension: CGFloat) async -> Data? {
     await Task.detached(priority: .utility) {
       guard
         let image = UIImage(data: data),
-        let thumb = image.preparingThumbnail(of: CGSize(width: 300, height: 300))
+        let thumb = image.preparingThumbnail(of: CGSize(width: maxDimension, height: maxDimension))
       else {
         return nil
       }
-      return thumb.jpegData(compressionQuality: 0.7)
+      return thumb.jpegData(compressionQuality: 0.85)
     }.value
   }
 }

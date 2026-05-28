@@ -235,10 +235,10 @@ private struct PhotoPageView: View {
         ZStack {
           if record.height == 0 {
             if isFullscreen {
-              ThumbnailView(data: record.thumbnailData)
+              ThumbnailView(data: record.thumbnailData, height: record.height)
                 .scaledToFit()
             } else {
-              ThumbnailView(data: record.thumbnailData)
+              ThumbnailView(data: record.thumbnailData, height: record.height)
                 .scaledToFit()
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay {
@@ -247,7 +247,7 @@ private struct PhotoPageView: View {
                 }
             }
           } else {
-            ThumbnailView(data: record.thumbnailData)
+            ThumbnailView(data: record.thumbnailData, height: record.height)
               .scaledToFit()
           }
           if viewModel.isLoadingImage {

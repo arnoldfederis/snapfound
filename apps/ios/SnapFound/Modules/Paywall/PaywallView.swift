@@ -64,26 +64,22 @@ struct PaywallView: View {
         title: "Unlimited Screenshot Indexing",
         subtitle: "Index your entire screenshot library - no cap"
       )
-      Divider().padding(.leading, 52)
       FeatureRow(
         icon: "lock.shield.fill",
         title: "Private On-Device OCR",
         subtitle: "All processing stays on your device. No cloud."
       )
-      Divider().padding(.leading, 52)
       FeatureRow(
         icon: "magnifyingglass",
         title: "Natural Language Search",
         subtitle: "Find screenshots by what's in them"
       )
-      Divider().padding(.leading, 52)
       FeatureRow(
         icon: "arrow.triangle.2.circlepath",
         title: "One-Time Purchase",
         subtitle: "Pay once, own forever. No subscription."
       )
     }
-    .background(.quaternary, in: RoundedRectangle(cornerRadius: 16))
   }
 
   // MARK: - Pricing
@@ -155,7 +151,7 @@ struct PaywallView: View {
     }
     .padding()
     .frame(maxWidth: .infinity)
-    .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+    .background(.background)
   }
 
   // MARK: - Privacy Note

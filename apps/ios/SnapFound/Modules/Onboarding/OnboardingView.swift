@@ -14,8 +14,8 @@ struct OnboardingView: View {
 
   private let pages: [Page] = [
     Page(
-      icon: "magnifyingglass.circle.fill",
-      iconColor: .blue,
+      icon: "sparkle.magnifyingglass",
+      iconColor: .accent,
       title: "Search your screenshots\nlike magic.",
       body: "SnapFound indexes screenshots only - not your full photo library."
     ),

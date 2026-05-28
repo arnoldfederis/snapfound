@@ -418,7 +418,7 @@ private struct HomeBodyView: View {
       StatusBanner(
         icon: "lock.shield",
         title: "Requesting permission…",
-        color: .blue
+        color: .accent
       )
     case .indexing(let prog):
       IndexingProgressBanner(progress: prog)
@@ -440,7 +440,7 @@ private struct HomeBodyView: View {
       StatusBanner(
         icon: "photo.stack",
         title: "Tap the settings gear to index your screenshots",
-        color: .blue
+        color: .accent
       )
     case .freeLimitReached:
       EmptyView()
@@ -481,10 +481,10 @@ private struct HomeBodyView: View {
         }
         .padding(12)
         .background(
-          .yellow.opacity(0.12),
-          in: RoundedRectangle(cornerRadius: 12)
+          .accent.opacity(0.15),
+          in: RoundedRectangle(cornerRadius: 14)
         )
-        .foregroundStyle(.primary)
+        .foregroundStyle(.accent)
       }
     }
   }
@@ -512,7 +512,7 @@ private struct StatusBanner: View {
       .font(.subheadline)
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(12)
-      .background(color.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+      .background(color.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
       .foregroundStyle(color)
   }
 }
@@ -527,17 +527,18 @@ private struct IndexingProgressBanner: View {
           "Indexing screenshots…",
           systemImage: "waveform.and.magnifyingglass"
         )
+        .foregroundStyle(.accent)
         .font(.subheadline.weight(.medium))
         Spacer()
         Text("\(progress.completed) / \(progress.total)")
           .font(.subheadline.monospacedDigit())
-          .foregroundStyle(.secondary)
+          .foregroundStyle(.accent)
       }
       ProgressView(value: progress.fraction)
-        .tint(.blue)
+        .tint(.accent)
     }
     .padding(12)
-    .background(.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+    .background(.accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
   }
 }
 
@@ -571,7 +572,7 @@ private struct PermissionDeniedBanner: View {
       }
     }
     .padding(12)
-    .background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+    .background(.orange.opacity(0.18), in: RoundedRectangle(cornerRadius: 12))
   }
 }
 
@@ -580,26 +581,32 @@ private struct LimitedAccessBanner: View {
     VStack(alignment: .leading, spacing: 8) {
       Label("Limited Photos Access", systemImage: "photo.badge.checkmark")
         .font(.subheadline.weight(.semibold))
-        .foregroundStyle(.blue)
+        .foregroundStyle(.yellow)
 
       Text(
         "Only selected photos are accessible. You can allow access to more screenshots in Settings › Privacy & Security › Photos."
       )
       .font(.caption)
       .foregroundStyle(.secondary)
-
+      
       Button {
         if let url = URL(string: UIApplication.openSettingsURLString) {
           UIApplication.shared.open(url)
         }
       } label: {
-        Text("Allow More in Settings")
-          .font(.caption.weight(.medium))
-          .foregroundStyle(.blue)
+        Label("Allow More in Settings", systemImage: "gear")
+          .font(.subheadline.weight(.medium))
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 10)
+          .background(
+            .yellow.opacity(0.15),
+            in: RoundedRectangle(cornerRadius: 10)
+          )
+          .foregroundStyle(.yellow)
       }
     }
     .padding(12)
-    .background(.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+    .background(.yellow.opacity(0.18), in: RoundedRectangle(cornerRadius: 12))
   }
 }
 
@@ -614,7 +621,7 @@ private struct LimitedAccessBanner: View {
 #Preview("Banners") {
   VStack(spacing: 12) {
     StatusBanner(
-      icon: "photo.stack", title: "Tap the settings gear to index your screenshots", color: .blue)
+      icon: "photo.stack", title: "Tap the settings gear to index your screenshots", color: .accent)
     IndexingProgressBanner(
       progress: IndexingProgress(total: 120, completed: 45, currentAssetID: nil))
     PermissionDeniedBanner()
