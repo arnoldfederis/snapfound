@@ -9,6 +9,7 @@ struct DetailView: View {
 
   @Environment(\.modelContext) private var modelContext
   @Environment(\.dismiss) private var dismiss
+  @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
   @State private var currentIndex: Int
   @State private var scrollPositionID: String?
@@ -130,6 +131,7 @@ struct DetailView: View {
         onPageChanged?(currentRecord.assetID)
       }
       .navigationBarTitleDisplayMode(.inline)
+      .toolbar(horizontalSizeClass == .compact ? .hidden : .visible, for: .tabBar)
       .toolbar(isFullscreen ? .hidden : .visible, for: .navigationBar)
       .toolbar(isFullscreen ? .hidden : .visible, for: .bottomBar)
       .toolbar {

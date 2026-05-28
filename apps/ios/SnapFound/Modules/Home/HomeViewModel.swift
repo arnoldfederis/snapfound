@@ -134,25 +134,15 @@ final class HomeViewModel {
   }
 
   private func loadSelectedImages(from records: [ScreenshotRecord]) async throws -> [UIImage] {
-    let orderedData = try await withThrowingTaskGroup(of: (Int, Data).self) { group in
-      for (index, record) in records.enumerated() {
-        let assetID = record.assetID
-        group.addTask {
-          let data = try await PhotoLibraryService.shared.loadFullImageData(for: assetID)
-          return (index, data)
-        }
-      }
+    var images: [UIImage] = []
+    images.reserveCapacity(records.count)
 
-      var results = [Data?](repeating: nil, count: records.count)
-      for try await (index, data) in group {
-        results[index] = data
+    for record in records {
+      let data = try await PhotoLibraryService.shared.loadFullImageData(for: record.assetID)
+      guard let image = UIImage(data: data) else {
+        throw PhotoLibraryError.imageLoadFailed
       }
-      return results
-    }
-
-    let images = orderedData.compactMap { data -> UIImage? in
-      guard let data else { return nil }
-      return UIImage(data: data)
+      images.append(image)
     }
 
     guard images.count == records.count else {

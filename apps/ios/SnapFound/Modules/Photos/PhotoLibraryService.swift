@@ -6,6 +6,10 @@ final class PhotoLibraryService {
   static let shared = PhotoLibraryService()
   private init() {}
 
+  private final class RequestState {
+    var didResume = false
+  }
+
   var authorizationStatus: PhotosAuthStatus {
     switch PHPhotoLibrary.authorizationStatus(for: .readWrite) {
     case .notDetermined: .notDetermined
@@ -93,31 +97,26 @@ final class PhotoLibraryService {
       options.isSynchronous = false
       options.version = .current
 
-      // nonisolated(unsafe): Photos serialises callbacks per request;
-      // no actual data race possible.
-      nonisolated(unsafe) var delivered = false
+      let state = RequestState()
 
-      PHImageManager.default().requestImage(
+      PHImageManager.default().requestImageDataAndOrientation(
         for: asset,
-        targetSize: PHImageManagerMaximumSize,
-        contentMode: .aspectFit,
         options: options
-      ) { image, info in
-        let isDegraded =
-          (info?[PHImageResultIsDegradedKey] as? Bool) == true
-        guard !isDegraded, !delivered else { return }
-        delivered = true
+      ) { data, _, _, info in
+        guard !state.didResume else { return }
 
         if let error = info?[PHImageErrorKey] as? Error {
+          state.didResume = true
           continuation.resume(throwing: error)
-        } else if let image,
-          let data = image.jpegData(compressionQuality: 0.95)
-        {
+        } else if let isCancelled = info?[PHImageCancelledKey] as? Bool, isCancelled {
+          state.didResume = true
+          continuation.resume(throwing: PhotoLibraryError.imageLoadFailed)
+        } else if let data {
+          state.didResume = true
           continuation.resume(returning: data)
         } else {
-          continuation.resume(
-            throwing: PhotoLibraryError.imageLoadFailed
-          )
+          state.didResume = true
+          continuation.resume(throwing: PhotoLibraryError.imageLoadFailed)
         }
       }
     }
@@ -137,7 +136,7 @@ final class PhotoLibraryService {
       options.deliveryMode = .opportunistic
       options.isNetworkAccessAllowed = false
 
-      nonisolated(unsafe) var delivered = false
+      let state = RequestState()
 
       PHImageManager.default().requestImage(
         for: asset,
@@ -147,8 +146,8 @@ final class PhotoLibraryService {
       ) { image, info in
         let isDegraded =
           (info?[PHImageResultIsDegradedKey] as? Bool) == true
-        guard !isDegraded, !delivered else { return }
-        delivered = true
+        guard !isDegraded, !state.didResume else { return }
+        state.didResume = true
 
         if let image, let data = image.jpegData(compressionQuality: 0.7) {
           continuation.resume(returning: data)
@@ -178,7 +177,7 @@ final class PhotoLibraryService {
       options.deliveryMode = .highQualityFormat
       options.isNetworkAccessAllowed = false
 
-      nonisolated(unsafe) var delivered = false
+      let state = RequestState()
 
       PHImageManager.default().requestImage(
         for: asset,
@@ -188,8 +187,8 @@ final class PhotoLibraryService {
       ) { image, info in
         let isDegraded =
           (info?[PHImageResultIsDegradedKey] as? Bool) == true
-        guard !isDegraded, !delivered else { return }
-        delivered = true
+        guard !isDegraded, !state.didResume else { return }
+        state.didResume = true
 
         if let error = info?[PHImageErrorKey] as? Error {
           continuation.resume(throwing: error)
