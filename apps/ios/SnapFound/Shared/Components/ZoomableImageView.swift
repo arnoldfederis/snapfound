@@ -33,7 +33,6 @@ struct ZoomableImageView: View {
         PhotoGestureOverlay(
           zoomScale: zoomScale,
           onSingleTap: { onSingleTap?() },
-          onDoubleTap: doubleTap,
           onVerticalChanged: { _ in
             resetDismiss()
           },
@@ -104,31 +103,16 @@ struct ZoomableImageView: View {
     }
     onDismissProgress?(0)
   }
-
-  private func doubleTap() {
-    withAnimation(.spring(duration: 0.3)) {
-      if zoomScale > 1 {
-        zoomScale = 1
-        lastZoomScale = 1
-        panOffset = .zero
-        lastPanOffset = .zero
-      } else {
-        zoomScale = 3
-        lastZoomScale = 3
-      }
-    }
-  }
 }
 
 // MARK: - UIKit gesture overlay
 
-/// Handles single/double tap and vertical-only pan via UIKit recognizers.
+/// Handles single tap and vertical-only pan via UIKit recognizers.
 /// `gestureRecognizerShouldBegin` returns false for horizontal pans at 1x zoom,
 /// letting the TabView's UIPageViewController recognizer take over.
 private struct PhotoGestureOverlay: UIViewRepresentable {
   let zoomScale: CGFloat
   let onSingleTap: () -> Void
-  let onDoubleTap: () -> Void
   let onVerticalChanged: (CGFloat) -> Void
   let onVerticalEnded: (CGFloat, CGFloat) -> Void
 
@@ -136,18 +120,11 @@ private struct PhotoGestureOverlay: UIViewRepresentable {
     let view = UIView()
     view.backgroundColor = .clear
 
-    let doubleTap = UITapGestureRecognizer(
-      target: context.coordinator,
-      action: #selector(Coordinator.handleDouble)
-    )
-    doubleTap.numberOfTapsRequired = 2
-
     let singleTap = UITapGestureRecognizer(
       target: context.coordinator,
       action: #selector(Coordinator.handleSingle)
     )
     singleTap.numberOfTapsRequired = 1
-    singleTap.require(toFail: doubleTap)
 
     let pan = UIPanGestureRecognizer(
       target: context.coordinator,
@@ -155,7 +132,6 @@ private struct PhotoGestureOverlay: UIViewRepresentable {
     )
     pan.delegate = context.coordinator
 
-    view.addGestureRecognizer(doubleTap)
     view.addGestureRecognizer(singleTap)
     view.addGestureRecognizer(pan)
     return view
@@ -164,7 +140,6 @@ private struct PhotoGestureOverlay: UIViewRepresentable {
   func updateUIView(_ uiView: UIView, context: Context) {
     context.coordinator.currentZoomScale = zoomScale
     context.coordinator.onSingleTap = onSingleTap
-    context.coordinator.onDoubleTap = onDoubleTap
     context.coordinator.onVerticalChanged = onVerticalChanged
     context.coordinator.onVerticalEnded = onVerticalEnded
   }
@@ -174,7 +149,6 @@ private struct PhotoGestureOverlay: UIViewRepresentable {
   final class Coordinator: NSObject, UIGestureRecognizerDelegate {
     var currentZoomScale: CGFloat = 1
     var onSingleTap: (() -> Void)?
-    var onDoubleTap: (() -> Void)?
     var onVerticalChanged: ((CGFloat) -> Void)?
     var onVerticalEnded: ((CGFloat, CGFloat) -> Void)?
 
@@ -193,7 +167,6 @@ private struct PhotoGestureOverlay: UIViewRepresentable {
     ) -> Bool { true }
 
     @objc func handleSingle() { onSingleTap?() }
-    @objc func handleDouble() { onDoubleTap?() }
 
     @objc func handlePan(_ pan: UIPanGestureRecognizer) {
       let t = pan.translation(in: pan.view)

@@ -34,7 +34,6 @@ final class IndexingService {
     let existingIDs = fetchExistingIDs(modelContext: modelContext)
     let existingCount = existingIDs.count
 
-    // For free tier, cap total indexed (existing + new) at freeIndexLimit.
     let remainingSlots = isPro ? nil : max(0, Self.freeIndexLimit - existingCount)
     if let slots = remainingSlots, slots == 0 {
       state = .freeLimitReached(existingCount)
@@ -43,27 +42,26 @@ final class IndexingService {
 
     let assets = photoService.fetchScreenshots()
     let newAssets = assets.filter { !existingIDs.contains($0.localIdentifier) }
-    let toIndex: [PhotoAsset]
-    if let remainingSlots {
-      toIndex = Array(newAssets.prefix(remainingSlots))
-    } else {
-      toIndex = newAssets
-    }
 
-    guard !toIndex.isEmpty else {
+    guard !newAssets.isEmpty else {
       state = .completed(existingCount)
       return
     }
 
-    let total = toIndex.count
-    progress = IndexingProgress(total: total, completed: 0, currentAssetID: nil)
+    let targetSuccessfulIndexes = remainingSlots ?? newAssets.count
+    let progressTotal = isPro ? newAssets.count : min(targetSuccessfulIndexes, newAssets.count)
+    progress = IndexingProgress(total: progressTotal, completed: 0, currentAssetID: nil)
     state = .indexing(progress)
 
     var indexed = 0
-    for (idx, asset) in toIndex.enumerated() {
+    for asset in newAssets {
+      if indexed >= targetSuccessfulIndexes {
+        break
+      }
+
       progress = IndexingProgress(
-        total: total,
-        completed: idx,
+        total: progressTotal,
+        completed: indexed,
         currentAssetID: asset.localIdentifier
       )
       state = .indexing(progress)
@@ -81,7 +79,11 @@ final class IndexingService {
     }
 
     let finalCount = existingCount + indexed
-    progress = IndexingProgress(total: total, completed: total, currentAssetID: nil)
+    progress = IndexingProgress(
+      total: progressTotal,
+      completed: min(indexed, progressTotal),
+      currentAssetID: nil
+    )
     state = !isPro && finalCount >= Self.freeIndexLimit
       ? .freeLimitReached(finalCount)
       : .completed(finalCount)
