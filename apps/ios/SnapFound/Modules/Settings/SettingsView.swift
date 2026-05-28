@@ -19,12 +19,6 @@ struct SettingsView: View {
         aboutSection
       }
       .navigationTitle("Settings")
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
-          Button("Done") { dismiss() }
-        }
-      }
       .alert("Delete all indexed data?", isPresented: $viewModel.showDeleteConfirmation) {
         Button("Delete Index", role: .destructive) {
           viewModel.deleteIndex(modelContext: modelContext)
@@ -40,7 +34,9 @@ struct SettingsView: View {
         }
         Button("Cancel", role: .cancel) {}
       } message: {
-        Text("All existing index data will be deleted and rebuilt from scratch. This may take a few minutes.")
+        Text(
+          "All existing index data will be deleted and rebuilt from scratch. This may take a few minutes."
+        )
       }
       .sheet(isPresented: $showPaywall) {
         PaywallView()

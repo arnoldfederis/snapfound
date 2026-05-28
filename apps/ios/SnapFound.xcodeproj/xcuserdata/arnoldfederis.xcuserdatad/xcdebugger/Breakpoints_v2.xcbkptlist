@@ -14,10 +14,10 @@
             filePath = "SnapFound/Modules/Home/HomeView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "621"
-            endingLineNumber = "621"
-            landmarkName = "unknown"
-            landmarkType = "0">
+            startingLineNumber = "644"
+            endingLineNumber = "644"
+            landmarkName = "body"
+            landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

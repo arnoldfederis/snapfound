@@ -84,7 +84,8 @@ final class IndexingService {
       completed: min(indexed, progressTotal),
       currentAssetID: nil
     )
-    state = !isPro && finalCount >= Self.freeIndexLimit
+    state =
+      !isPro && finalCount >= Self.freeIndexLimit
       ? .freeLimitReached(finalCount)
       : .completed(finalCount)
   }

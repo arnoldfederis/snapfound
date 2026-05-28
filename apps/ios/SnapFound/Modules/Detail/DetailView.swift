@@ -96,7 +96,7 @@ struct DetailView: View {
             .padding(.horizontal, record.height > 0 ? 16 : 0)
             .frame(width: geo.size.width, height: geo.size.height)
             .id(record.assetID)
-            
+
           }
         }
         .scrollTargetLayout()

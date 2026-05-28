@@ -8,7 +8,6 @@ internal import UIKit
 final class HomeViewModel {
   var searchText = ""
   var showPaywall = false
-  var showSettings = false
   var lastViewedAssetID: String?
 
   // Selection mode
@@ -108,7 +107,7 @@ final class HomeViewModel {
     exitSelectionMode()
     Haptics.notification(.success)
   }
-  
+
   func shareSelected(records: [ScreenshotRecord]) async {
     guard !isPreparingShare else { return }
 
@@ -144,7 +143,7 @@ final class HomeViewModel {
         }
       }
 
-      var results = Array<Data?>(repeating: nil, count: records.count)
+      var results = [Data?](repeating: nil, count: records.count)
       for try await (index, data) in group {
         results[index] = data
       }

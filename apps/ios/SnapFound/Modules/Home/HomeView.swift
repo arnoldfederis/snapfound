@@ -1,6 +1,12 @@
 import SwiftData
 import SwiftUI
 
+private enum HomeTab: Hashable {
+  case library
+  case search
+  case settings
+}
+
 struct HomeView: View {
   @Environment(\.modelContext) private var modelContext
   @Environment(PurchaseManager.self) private var purchaseManager
@@ -11,132 +17,153 @@ struct HomeView: View {
   @AppStorage("gridZoomLevel") private var zoomLevelRaw = GridZoomLevel.comfortable.rawValue
   @State private var viewModel = HomeViewModel()
   @State private var showOnboarding = false
-  @State private var isSearchPresented = false
+  @State private var selectedTab: HomeTab = .library
 
   private var zoomLevel: GridZoomLevel {
     GridZoomLevel(rawValue: zoomLevelRaw) ?? .comfortable
   }
 
   var body: some View {
-    NavigationStack {
-      HomeBodyView(
-        records: records,
-        viewModel: viewModel,
-        zoomLevel: zoomLevel,
-        zoomLevelRaw: $zoomLevelRaw,
-        isSearchPresented: $isSearchPresented
-      )
-      .navigationDestination(for: ScreenshotRecord.self) { record in
-        DetailView(
-          record: record, allRecords: records,
-          onPageChanged: { assetID in
-            viewModel.lastViewedAssetID = assetID
-          })
-      }
-      .searchable(
-        text: $viewModel.searchText, isPresented: $isSearchPresented, prompt: "Search screenshots…"
-      )
-      .onChange(of: viewModel.searchText) {
-        viewModel.search(in: records)
-      }
-      .toolbar {
-        if viewModel.isSelectionMode {
-          ToolbarItem(placement: .topBarLeading) {
-            Button("Cancel") { viewModel.exitSelectionMode() }
-          }
-          ToolbarItem(placement: .topBarTrailing) {
-            Button {
-              viewModel.showDeleteSelected = true
-              Haptics.notification(.warning)
-            } label: {
-              Label("Delete Selected", systemImage: "trash")
-            }
-            .disabled(viewModel.selectedIDs.isEmpty)
-            .tint(.red)
-            .confirmationDialog(
-              "Delete \(viewModel.selectedIDs.count) Screenshots from Index?",
-              isPresented: $viewModel.showDeleteSelected,
-              titleVisibility: .visible
-            ) {
-              Button("Delete \(viewModel.selectedIDs.count)", role: .destructive) {
-                viewModel.deleteSelected(modelContext: modelContext, records: records)
-                viewModel.showDeleteSelected = false
-              }
-
-              Button("Cancel", role: .cancel) {
-                viewModel.showDeleteSelected = false
-              }
-            } message: {
-              Text(
-                "The selected screenshots will be removed from the local search index. Your photos will not be deleted."
-              )
-            }
-          }
-        } else {
-          ToolbarItemGroup(placement: .topBarTrailing) {
-            Button {
-              viewModel.showSettings = true
-            } label: {
-              Image(systemName: "gear")
-            }
-          }
-        }
-      }
-      .sheet(isPresented: $viewModel.showSettings) {
-        SettingsView()
-      }
-      .sheet(isPresented: $viewModel.showPaywall) {
-        PaywallView()
-      }
-      .sheet(isPresented: $viewModel.showShareSheet, onDismiss: viewModel.clearShareState) {
-        ActivityShareSheet(items: viewModel.shareItems)
-      }
-      .alert("Couldn’t Prepare Share", isPresented: .constant(viewModel.shareErrorMessage != nil)) {
-        Button("OK", role: .cancel) {
-          viewModel.shareErrorMessage = nil
-        }
-      } message: {
-        Text(viewModel.shareErrorMessage ?? "The selected screenshots could not be loaded.")
-      }
-      .fullScreenCover(isPresented: $showOnboarding) {
-        OnboardingView {
-          showOnboarding = false
-          Task { @MainActor in
-            hasSeenOnboarding = true
-            guard records.isEmpty else { return }
-            viewModel.startIndexing(
-              modelContext: modelContext,
-              isPro: purchaseManager.isPro
-            )
-          }
-        }
-      }
-      .onAppear {
-        if !hasSeenOnboarding {
-          showOnboarding = true
-        } else {
-          viewModel.onAppear(
-            modelContext: modelContext,
+    TabView(selection: $selectedTab) {
+      Tab("Screenshots", systemImage: "photo.on.rectangle.angled", value: .library) {
+        NavigationStack {
+          HomeLibraryTabView(
             records: records,
+            viewModel: viewModel,
+            zoomLevel: zoomLevel,
+            zoomLevelRaw: $zoomLevelRaw,
+            openSettings: {
+              selectedTab = .settings
+            }
+          )
+          .navigationDestination(for: ScreenshotRecord.self) { record in
+            DetailView(
+              record: record, allRecords: records,
+              onPageChanged: { assetID in
+                viewModel.lastViewedAssetID = assetID
+              })
+          }
+          .toolbar {
+            if viewModel.isSelectionMode {
+              ToolbarItem(placement: .topBarLeading) {
+                Button("Cancel") { viewModel.exitSelectionMode() }
+              }
+              ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                  viewModel.showDeleteSelected = true
+                  Haptics.notification(.warning)
+                } label: {
+                  Label("Delete Selected", systemImage: "trash")
+                }
+                .disabled(viewModel.selectedIDs.isEmpty)
+                .tint(.red)
+                .confirmationDialog(
+                  "Delete \(viewModel.selectedIDs.count) Screenshots from Index?",
+                  isPresented: $viewModel.showDeleteSelected,
+                  titleVisibility: .visible
+                ) {
+                  Button("Delete \(viewModel.selectedIDs.count)", role: .destructive) {
+                    viewModel.deleteSelected(modelContext: modelContext, records: records)
+                    viewModel.showDeleteSelected = false
+                  }
+
+                  Button("Cancel", role: .cancel) {
+                    viewModel.showDeleteSelected = false
+                  }
+                } message: {
+                  Text(
+                    "The selected screenshots will be removed from the local search index. Your photos will not be deleted."
+                  )
+                }
+              }
+            } else {
+              ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                  Picker("Grid Size", selection: $zoomLevelRaw) {
+                    Label("4 Columns", systemImage: "square.grid.2x2").tag(GridZoomLevel.fine.rawValue)
+                    Label("3 Columns", systemImage: "square.grid.2x2").tag(
+                      GridZoomLevel.comfortable.rawValue)
+                    Label("2 Columns", systemImage: "rectangle.grid.1x2").tag(
+                      GridZoomLevel.large.rawValue)
+                  }
+                } label: {
+                  Image(systemName: "square.grid.3x2")
+                }
+              }
+            }
+          }
+        }
+      }
+
+      Tab(value: .search, role: .search) {
+        NavigationStack {
+          SearchTabView(
+            records: records,
+            viewModel: viewModel
+          )
+          .navigationDestination(for: ScreenshotRecord.self) { record in
+            DetailView(
+              record: record, allRecords: records,
+              onPageChanged: { assetID in
+                viewModel.lastViewedAssetID = assetID
+              })
+          }
+        }
+      }
+
+      Tab("Settings", systemImage: "gearshape", value: .settings) {
+        NavigationStack {
+          SettingsView()
+        }
+      }
+    }
+    .tabViewSearchActivation(.searchTabSelection)
+    .onChange(of: viewModel.searchText) {
+      viewModel.search(in: records)
+    }
+    .sheet(isPresented: $viewModel.showPaywall) {
+      PaywallView()
+    }
+    .sheet(isPresented: $viewModel.showShareSheet, onDismiss: viewModel.clearShareState) {
+      ActivityShareSheet(items: viewModel.shareItems)
+    }
+    .alert("Couldn’t Prepare Share", isPresented: .constant(viewModel.shareErrorMessage != nil)) {
+      Button("OK", role: .cancel) {
+        viewModel.shareErrorMessage = nil
+      }
+    } message: {
+      Text(viewModel.shareErrorMessage ?? "The selected screenshots could not be loaded.")
+    }
+    .fullScreenCover(isPresented: $showOnboarding) {
+      OnboardingView {
+        showOnboarding = false
+        Task { @MainActor in
+          hasSeenOnboarding = true
+          guard records.isEmpty else { return }
+          viewModel.startIndexing(
+            modelContext: modelContext,
             isPro: purchaseManager.isPro
           )
         }
       }
     }
+    .onAppear {
+      if !hasSeenOnboarding {
+        showOnboarding = true
+      } else {
+        viewModel.onAppear(
+          modelContext: modelContext,
+          records: records,
+          isPro: purchaseManager.isPro
+        )
+      }
+    }
   }
-
 }
 
-// MARK: - Body (needs its own type to access isSearching environment)
-
-private struct HomeBodyView: View {
+private struct SearchTabView: View {
   let records: [ScreenshotRecord]
   let viewModel: HomeViewModel
-  let zoomLevel: GridZoomLevel
-  @Binding var zoomLevelRaw: Int
-  @Binding var isSearchPresented: Bool
-
-  @Environment(PurchaseManager.self) private var purchaseManager
 
   private let searchSuggestions = [
     "Receipts", "Wi-Fi password", "Flight", "Hotel booking",
@@ -146,58 +173,131 @@ private struct HomeBodyView: View {
 
   var body: some View {
     Group {
-      if viewModel.isSearchActive {
-        searchResultsView
+      if viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        searchSuggestionsView
+      } else if viewModel.searchResults.isEmpty {
+        ContentUnavailableView.search(text: viewModel.searchText)
       } else {
-        mainGridView
+        SearchResultsGridView(results: viewModel.searchResults)
       }
     }
-    .navigationTitle(navigationTitle)
-    .searchSuggestions {
-      if viewModel.searchText.isEmpty {
-        ForEach(searchSuggestions, id: \.self) { suggestion in
-          Label(suggestion, systemImage: "magnifyingglass")
-            .searchCompletion(suggestion)
-        }
-      }
+    .navigationTitle(searchNavigationTitle)
+    .searchable(
+      text: Binding(
+        get: { viewModel.searchText },
+        set: { viewModel.searchText = $0 }
+      ),
+      placement: .toolbar,
+      prompt: "Search screenshots…"
+    )
+    .searchToolbarBehavior(.minimize)
+  }
+
+  private var searchNavigationTitle: String {
+    if viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      return "Search"
     }
-    .toolbar {
-      ToolbarItemGroup(placement: .bottomBar) {
-        if viewModel.isSelectionMode {
-          Button {
-            Task {
-              await viewModel.shareSelected(records: records)
-            }
-          } label: {
-            if viewModel.isPreparingShare {
-              Label("Preparing...", systemImage: "hourglass")
-            } else {
-              Label("Share", systemImage: "square.and.arrow.up")
-            }
-          }
-          .disabled(viewModel.selectedIDs.isEmpty || viewModel.isPreparingShare)
-        } else {
-          Menu {
-            Picker("Grid Size", selection: $zoomLevelRaw) {
-              Label("4 Columns", systemImage: "square.grid.2x2").tag(GridZoomLevel.fine.rawValue)
-              Label("3 Columns", systemImage: "square.grid.2x2").tag(
-                GridZoomLevel.comfortable.rawValue)
-              Label("2 Columns", systemImage: "rectangle.grid.1x2").tag(
-                GridZoomLevel.large.rawValue)
-            }
-          } label: {
-            Image(systemName: "square.grid.3x2")
-          }
+
+    let count = viewModel.searchResults.count
+    return "\(count) \(count == 1 ? "Result" : "Results")"
+  }
+
+  private var searchSuggestionsView: some View {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 16) {
+        ContentUnavailableView {
+          Label("Search Screenshots", systemImage: "sparkle.magnifyingglass").foregroundStyle(.accent)
+        } description: {
+          Text("Search OCR text from your indexed screenshots.")
         }
 
-        Spacer()
-        Button {
-          isSearchPresented = true
-        } label: {
-          Image(systemName: "magnifyingglass")
+        VStack(alignment: .leading, spacing: 12) {
+          Text("Suggestions")
+            .font(.headline)
+            .foregroundStyle(.secondary)
+
+          FlowLayout(spacing: 8) {
+            ForEach(searchSuggestions, id: \.self) { suggestion in
+              Button {
+                viewModel.searchText = suggestion
+              } label: {
+                Text(suggestion)
+                  .padding(.horizontal, 10)
+                  .padding(.vertical, 6)
+                  .background(Color.accentColor.opacity(0.15), in: Capsule())
+                  .foregroundStyle(Color.accentColor)
+              }
+              .buttonStyle(.plain)
+            }
+          }
+        }
+        .padding(.horizontal, 16)
+      }
+      .padding(.top, 24)
+    }
+  }
+}
+
+private struct SearchResultsGridView: View {
+  let results: [SearchResult]
+
+  var body: some View {
+    ScrollView {
+      LazyVGrid(
+        columns: Array(
+          repeating: GridItem(.flexible(), spacing: GridZoomLevel.comfortable.spacing), count: 3),
+        spacing: GridZoomLevel.comfortable.spacing
+      ) {
+        ForEach(results) { result in
+          NavigationLink(value: result.record) {
+            ScreenshotGridCell(
+              record: result.record,
+              matchedTerms: result.matchedTerms,
+              isSelected: false
+            )
+          }
+          .buttonStyle(.plain)
+          .id(result.record.assetID)
         }
       }
+      .padding(.horizontal, 16)
+      .padding(.top, 8)
     }
+  }
+}
+
+private struct HomeLibraryTabView: View {
+  let records: [ScreenshotRecord]
+  let viewModel: HomeViewModel
+  let zoomLevel: GridZoomLevel
+  @Binding var zoomLevelRaw: Int
+  let openSettings: () -> Void
+
+  @Environment(PurchaseManager.self) private var purchaseManager
+
+  var body: some View {
+    mainGridView
+      .navigationTitle(navigationTitle)
+      .toolbar {
+        ToolbarItemGroup(placement: .bottomBar) {
+          if viewModel.isSelectionMode {
+            Button {
+              Task {
+                await viewModel.shareSelected(records: records)
+              }
+            } label: {
+              if viewModel.isPreparingShare {
+                Label("Preparing...", systemImage: "hourglass")
+              } else {
+                Label("Share", systemImage: "square.and.arrow.up")
+              }
+            }
+            .disabled(viewModel.selectedIDs.isEmpty || viewModel.isPreparingShare)
+          } else {
+            
+          }
+        }
+      }
   }
 
   private var navigationTitle: String {
@@ -205,10 +305,6 @@ private struct HomeBodyView: View {
       return viewModel.selectedIDs.isEmpty
         ? "Select Screenshots"
         : "\(viewModel.selectedIDs.count) Selected"
-    }
-    if viewModel.isSearchActive {
-      let c = viewModel.searchResults.count
-      return "\(c) \(c == 1 ? "Result" : "Results")"
     }
     return "SnapFound"
   }
@@ -362,7 +458,7 @@ private struct HomeBodyView: View {
     } description: {
       Text(noScreenshotsEmptyStateDescription)
     } actions: {
-      Button("Open Settings") { viewModel.showSettings = true }
+      Button("Open Settings") { openSettings() }
         .buttonStyle(.borderedProminent)
     }
     .padding(.top, 40)
@@ -381,25 +477,6 @@ private struct HomeBodyView: View {
         "SnapFound searches screenshots only. It did not find any accessible screenshots in Photos."
     }
     return "Open Settings and tap \"Index New Screenshots\" to start searching your screenshots."
-  }
-
-  // MARK: - Search Results
-
-  @ViewBuilder
-  private var searchResultsView: some View {
-    if viewModel.searchResults.isEmpty {
-      ContentUnavailableView.search(text: viewModel.searchText)
-    } else {
-      ScrollView {
-        flatGrid(
-          items: viewModel.searchResults.map {
-            CellItem(record: $0.record, terms: $0.matchedTerms)
-          }
-        )
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-      }
-    }
   }
 
   // MARK: - Grid Helper
@@ -588,7 +665,7 @@ private struct LimitedAccessBanner: View {
       )
       .font(.caption)
       .foregroundStyle(.secondary)
-      
+
       Button {
         if let url = URL(string: UIApplication.openSettingsURLString) {
           UIApplication.shared.open(url)
