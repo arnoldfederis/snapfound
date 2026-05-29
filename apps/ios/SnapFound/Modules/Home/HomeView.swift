@@ -184,7 +184,6 @@ private struct SearchTabView: View {
   var body: some View {
     content
       .navigationTitle(searchNavigationTitle)
-      .navigationBarTitleDisplayMode(.inline)
   }
 
   @ViewBuilder
@@ -482,6 +481,7 @@ private struct HomeLibraryTabView: View {
         )
       }
       .buttonStyle(.plain)
+      .contentShape(Rectangle())
     } else {
       NavigationLink(value: item.record) {
         ScreenshotGridCell(
@@ -491,6 +491,7 @@ private struct HomeLibraryTabView: View {
         )
       }
       .buttonStyle(.plain)
+      .contentShape(Rectangle())
     }
   }
 
