@@ -225,7 +225,8 @@ struct HomeLibraryTabView: View {
 
   private var noScreenshotsEmptyStateDescription: String {
     if case .completed(0) = viewModel.indexingState {
-      return "SnapFound searches screenshots only. It did not find any accessible screenshots in Photos."
+      return
+        "SnapFound searches screenshots only. It did not find any accessible screenshots in Photos."
     }
     return "Open Settings and tap \"Index New Screenshots\" to start searching your screenshots."
   }

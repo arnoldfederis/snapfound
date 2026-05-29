@@ -36,7 +36,7 @@ extension IndexingState: Equatable {
   static func == (lhs: IndexingState, rhs: IndexingState) -> Bool {
     switch (lhs, rhs) {
     case (.idle, .idle), (.requestingPermission, .requestingPermission),
-         (.permissionDenied, .permissionDenied):
+      (.permissionDenied, .permissionDenied):
       return true
     case (.indexing(let a), .indexing(let b)):
       return a.total == b.total && a.completed == b.completed

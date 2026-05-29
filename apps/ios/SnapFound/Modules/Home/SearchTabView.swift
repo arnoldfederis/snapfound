@@ -196,7 +196,7 @@ struct SearchTabView: View {
   }
 }
 
-fileprivate struct RecentlyOpenedCard: View {
+private struct RecentlyOpenedCard: View {
   let record: ScreenshotRecord
   let openedAt: Date
   let now: Date
@@ -235,7 +235,7 @@ fileprivate struct RecentlyOpenedCard: View {
   }
 }
 
-fileprivate struct SearchResultsGridView: View {
+private struct SearchResultsGridView: View {
   let results: [SearchResult]
 
   var body: some View {
