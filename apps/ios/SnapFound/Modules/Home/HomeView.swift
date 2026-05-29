@@ -105,13 +105,7 @@ struct HomeView: View {
         NavigationStack(path: $searchPath) {
           SearchTabView(
             records: records,
-            viewModel: viewModel,
-            showsSearchField: searchPath.isEmpty,
-            onOpenRecord: { record in
-              withAnimation(.snappy(duration: 0.25)) {
-                searchPath.append(record)
-              }
-            }
+            viewModel: viewModel
           )
           .navigationDestination(for: ScreenshotRecord.self) { record in
             DetailView(
@@ -180,8 +174,6 @@ struct HomeView: View {
 private struct SearchTabView: View {
   let records: [ScreenshotRecord]
   let viewModel: HomeViewModel
-  let showsSearchField: Bool
-  let onOpenRecord: (ScreenshotRecord) -> Void
 
   private let searchSuggestions = [
     "Receipts", "Wi-Fi password", "Flight", "Hotel booking",
@@ -197,33 +189,25 @@ private struct SearchTabView: View {
 
   @ViewBuilder
   private var content: some View {
-    let rootContent = Group {
+    Group {
       if viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
         searchSuggestionsView
       } else if viewModel.searchResults.isEmpty {
         ContentUnavailableView.search(text: viewModel.searchText)
       } else {
         SearchResultsGridView(
-          results: viewModel.searchResults,
-          lastViewedAssetID: viewModel.lastViewedAssetID,
-          onOpenRecord: onOpenRecord
+          results: viewModel.searchResults
         )
       }
     }
-
-    if showsSearchField {
-      rootContent
-        .searchable(
-          text: Binding(
-            get: { viewModel.searchText },
-            set: { viewModel.searchText = $0 }
-          ),
-          placement: .navigationBarDrawer(displayMode: .always),
-          prompt: "Search screenshots…"
-        )
-    } else {
-      rootContent
-    }
+    .searchable(
+      text: Binding(
+        get: { viewModel.searchText },
+        set: { viewModel.searchText = $0 }
+      ),
+      placement: .navigationBarDrawer(displayMode: .always),
+      prompt: "Search screenshots…"
+    )
   }
 
   private var searchNavigationTitle: String {
@@ -274,40 +258,28 @@ private struct SearchTabView: View {
 
 private struct SearchResultsGridView: View {
   let results: [SearchResult]
-  let lastViewedAssetID: String?
-  let onOpenRecord: (ScreenshotRecord) -> Void
 
   var body: some View {
-    ScrollViewReader { proxy in
-      ScrollView {
-        LazyVGrid(
-          columns: Array(
-            repeating: GridItem(.flexible(), spacing: GridZoomLevel.comfortable.spacing), count: 3),
-          spacing: GridZoomLevel.comfortable.spacing
-        ) {
-          ForEach(results) { result in
-            Button {
-              onOpenRecord(result.record)
-            } label: {
-              ScreenshotGridCell(
-                record: result.record,
-                matchedTerms: result.matchedTerms,
-                isSelected: false
-              )
-            }
-            .buttonStyle(.plain)
-            .id(result.record.assetID)
+    ScrollView {
+      LazyVGrid(
+        columns: Array(
+          repeating: GridItem(.flexible(), spacing: GridZoomLevel.comfortable.spacing), count: 3),
+        spacing: GridZoomLevel.comfortable.spacing
+      ) {
+        ForEach(results) { result in
+          NavigationLink(value: result.record) {
+            ScreenshotGridCell(
+              record: result.record,
+              matchedTerms: result.matchedTerms,
+              isSelected: false
+            )
           }
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-      }
-      .onAppear {
-        guard let lastViewedAssetID else { return }
-        DispatchQueue.main.async {
-          proxy.scrollTo(lastViewedAssetID, anchor: .center)
+          .buttonStyle(.plain)
+          .id(result.record.assetID)
         }
       }
+      .padding(.horizontal, 16)
+      .padding(.top, 8)
     }
   }
 }
