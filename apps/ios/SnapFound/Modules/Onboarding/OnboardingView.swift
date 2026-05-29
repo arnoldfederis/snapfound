@@ -44,16 +44,16 @@ struct OnboardingView: View {
         }
       }
       .tabViewStyle(.page(indexDisplayMode: .never))
+      .onChange(of: currentPage) { Haptics.selection() }
 
       VStack(spacing: 20) {
         pageIndicator
 
         Button {
           if currentPage < pages.count - 1 {
-            withAnimation(.easeInOut(duration: 0.3)) {
-              currentPage += 1
-            }
+            withAnimation(.easeInOut(duration: 0.3)) { currentPage += 1 }
           } else {
+            Haptics.notification(.success)
             onComplete()
           }
         } label: {

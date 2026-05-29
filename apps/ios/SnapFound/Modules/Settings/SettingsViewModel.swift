@@ -10,8 +10,11 @@ final class SettingsViewModel {
 
   private let indexingService = IndexingService.shared
 
+  var indexingState: IndexingState { indexingService.state }
+
   func deleteIndex(modelContext: ModelContext) {
     indexingService.deleteIndex(modelContext: modelContext)
+    Haptics.notification(.success)
   }
 
   func indexNew(modelContext: ModelContext, isPro: Bool) {

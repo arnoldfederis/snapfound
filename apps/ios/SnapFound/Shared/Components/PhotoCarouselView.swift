@@ -182,6 +182,7 @@ struct PhotoCarouselView: UIViewRepresentable {
       _ collectionView: UICollectionView,
       didSelectItemAt indexPath: IndexPath
     ) {
+      Haptics.impact(.light)
       onSelect(records[indexPath.item])
     }
   }

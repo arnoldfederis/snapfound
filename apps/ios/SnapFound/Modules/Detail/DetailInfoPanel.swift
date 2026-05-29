@@ -32,7 +32,7 @@ struct DetailInfoPanel: View {
       }
     }
     .sheet(isPresented: $isSharePresented) {
-      ShareSheet(items: shareItems)
+      ShareSheet(items: shareItems).presentationDetents([.medium, .large])
     }
     .alert("Delete from Index?", isPresented: $showDeleteAlert) {
       Button("Delete from Index", role: .destructive) {
@@ -113,6 +113,7 @@ struct DetailInfoPanel: View {
       .disabled(record.ocrText.isEmpty)
 
       Button {
+        Haptics.impact(.light)
         isSharePresented = true
       } label: {
         Label("Share Screenshot", systemImage: "square.and.arrow.up")
@@ -126,6 +127,7 @@ struct DetailInfoPanel: View {
           isReindexing ? "Re-indexing..." : "Re-index This Screenshot",
           systemImage: "arrow.triangle.2.circlepath"
         )
+        .foregroundStyle(.accent)
       }
       .disabled(isReindexing)
 

@@ -1,4 +1,5 @@
 import Foundation
+internal import UIKit
 
 @MainActor
 @Observable
@@ -12,6 +13,7 @@ final class PaywallViewModel {
     await manager.purchase()
     if case .failed(let err) = manager.purchaseState {
       errorMessage = err.localizedDescription
+      Haptics.notification(.error)
     }
     isLoading = false
   }
@@ -22,6 +24,7 @@ final class PaywallViewModel {
     await manager.restorePurchases()
     if case .failed(let err) = manager.purchaseState {
       errorMessage = err.localizedDescription
+      Haptics.notification(.error)
     }
     isLoading = false
   }

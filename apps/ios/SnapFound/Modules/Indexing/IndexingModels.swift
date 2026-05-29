@@ -31,3 +31,20 @@ enum IndexingState {
   case failed(Error)
   case permissionDenied
 }
+
+extension IndexingState: Equatable {
+  static func == (lhs: IndexingState, rhs: IndexingState) -> Bool {
+    switch (lhs, rhs) {
+    case (.idle, .idle), (.requestingPermission, .requestingPermission),
+         (.permissionDenied, .permissionDenied):
+      return true
+    case (.indexing(let a), .indexing(let b)):
+      return a.total == b.total && a.completed == b.completed
+    case (.completed(let a), .completed(let b)): return a == b
+    case (.freeLimitReached(let a), .freeLimitReached(let b)): return a == b
+    case (.paused(let a), .paused(let b)): return a == b
+    case (.failed, .failed): return true
+    default: return false
+    }
+  }
+}

@@ -3,6 +3,11 @@ import Photos
 import SwiftData
 internal import UIKit
 
+struct RecentlyOpenedEntry: Codable {
+  let assetID: String
+  let openedAt: Date
+}
+
 @MainActor
 @Observable
 final class HomeViewModel {
@@ -18,6 +23,14 @@ final class HomeViewModel {
   var showShareSheet = false
   var shareItems: [UIImage] = []
   var shareErrorMessage: String?
+
+  private static let recentlyOpenedKey = "recentlyOpenedV2"
+  private(set) var recentlyOpened: [RecentlyOpenedEntry] = {
+    guard let data = UserDefaults.standard.data(forKey: "recentlyOpenedV2"),
+      let entries = try? JSONDecoder().decode([RecentlyOpenedEntry].self, from: data)
+    else { return [] }
+    return entries
+  }()
 
   private(set) var searchService = SearchService()
   private let indexingService = IndexingService.shared
@@ -155,5 +168,22 @@ final class HomeViewModel {
   func clearShareState() {
     shareItems = []
     shareErrorMessage = nil
+  }
+
+  // MARK: - Recently Opened
+
+  func addRecentlyOpened(_ assetID: String) {
+    var entries = recentlyOpened.filter { $0.assetID != assetID }
+    entries.insert(RecentlyOpenedEntry(assetID: assetID, openedAt: Date()), at: 0)
+    recentlyOpened = Array(entries.prefix(20))
+    if let data = try? JSONEncoder().encode(recentlyOpened) {
+      UserDefaults.standard.set(data, forKey: Self.recentlyOpenedKey)
+    }
+  }
+
+  func clearRecentlyOpened() {
+    recentlyOpened = []
+    UserDefaults.standard.removeObject(forKey: Self.recentlyOpenedKey)
+    Haptics.notification(.success)
   }
 }

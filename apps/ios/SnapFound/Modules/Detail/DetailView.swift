@@ -89,7 +89,6 @@ struct DetailView: View {
                 if idx == currentIndex { currentPageImage = img }
               },
               onSingleTap: {
-                // Only height==0 images (unknown aspect) toggle fullscreen
                 guard record.height == 0 else { return }
                 withAnimation(.easeInOut(duration: 0.25)) { isFullscreen.toggle() }
               }
@@ -97,7 +96,6 @@ struct DetailView: View {
             .padding(.horizontal, record.height > 0 ? 16 : 0)
             .frame(width: geo.size.width, height: geo.size.height)
             .id(record.assetID)
-
           }
         }
         .scrollTargetLayout()
@@ -106,13 +104,15 @@ struct DetailView: View {
       .scrollIndicators(.hidden)
       .scrollPosition(id: $scrollPositionID)
       .onChange(of: scrollPositionID) { _, id in
-        guard let id, let idx = records.firstIndex(where: { $0.assetID == id }), idx != currentIndex
+        guard let id, let idx = records.firstIndex(where: { $0.assetID == id }),
+          idx != currentIndex
         else { return }
         currentIndex = idx
       }
       .onChange(of: currentIndex) { _, idx in
         currentPageImage = nil
         guard idx >= 0, idx < records.count else { return }
+        Haptics.selection()
         let record = records[idx]
         onPageChanged?(record.assetID)
         if record.height > 0 { isFullscreen = false }
@@ -135,24 +135,27 @@ struct DetailView: View {
       .toolbar(isFullscreen ? .hidden : .visible, for: .navigationBar)
       .toolbar(isFullscreen ? .hidden : .visible, for: .bottomBar)
       .toolbar {
-        ToolbarItem(placement: .principal) {
-          Button {
-            showInfo = true
-            Haptics.impact(.light)
-          } label: {
-            VStack(spacing: 2) {
-              Text(currentRecord.creationDate.smartDisplayString())
-                .font(.caption)
-                .fontWeight(.semibold)
-              Text(currentRecord.creationDate, format: .dateTime.hour().minute())
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
+        if UIDevice.current.userInterfaceIdiom == .phone {
+          ToolbarItem(placement: .principal) {
+            Button {
+              showInfo = true
+              Haptics.impact(.light)
+            } label: {
+              VStack(spacing: 2) {
+                Text(currentRecord.creationDate.smartDisplayString())
+                  .font(.caption)
+                  .fontWeight(.semibold)
+                Text(currentRecord.creationDate, format: .dateTime.hour().minute())
+                  .font(.caption2)
+                  .fontWeight(.semibold)
+                  .foregroundStyle(.secondary)
+              }
+              .padding(.horizontal, 46)
             }
-            .padding(.horizontal, 46)
+            .buttonStyle(.glass)
           }
-          .buttonStyle(.glass)
         }
+
         ToolbarItem(placement: .topBarTrailing) {
           Button {
             showInfo = true
@@ -163,7 +166,27 @@ struct DetailView: View {
         }
         ToolbarItemGroup(placement: .bottomBar) {
           shareMenuItems
-          Spacer()
+          if UIDevice.current.userInterfaceIdiom == .phone {
+            Spacer()
+          } else {
+            Spacer()
+            Button {
+              showInfo = true
+              Haptics.impact(.light)
+            } label: {
+              VStack(spacing: 2) {
+                Text(currentRecord.creationDate.smartDisplayString())
+                  .font(.caption)
+                  .fontWeight(.semibold)
+                Text(currentRecord.creationDate, format: .dateTime.hour().minute())
+                  .font(.caption2)
+                  .fontWeight(.semibold)
+                  .foregroundStyle(.secondary)
+              }
+              .padding(.horizontal, 46)
+            }
+            Spacer()
+          }
           Button {
             showDeleteConfirm = true
             Haptics.notification(.warning)
@@ -205,67 +228,6 @@ private struct TransferableImage: Transferable {
   static var transferRepresentation: some TransferRepresentation {
     DataRepresentation(exportedContentType: .png) {
       $0.uiImage.pngData() ?? Data()
-    }
-  }
-}
-
-// MARK: - Photo Page
-
-private struct PhotoPageView: View {
-  let record: ScreenshotRecord
-  let isFullscreen: Bool
-  let isCurrentPage: Bool
-  let onSwipeUp: () -> Void
-  let onDismiss: () -> Void
-  let onDismissProgress: (Double) -> Void
-  let onImageLoaded: (UIImage) -> Void
-  let onSingleTap: () -> Void
-
-  @State private var viewModel = DetailViewModel()
-
-  var body: some View {
-    Group {
-      if let image = viewModel.fullImage {
-        ZoomableImageView(
-          image: image,
-          onSwipeUp: onSwipeUp,
-          onDismiss: onDismiss,
-          onDismissProgress: onDismissProgress,
-          onSingleTap: onSingleTap
-        )
-      } else {
-        ZStack {
-          if record.height == 0 {
-            if isFullscreen {
-              ThumbnailView(data: record.thumbnailData, height: record.height)
-                .scaledToFit()
-            } else {
-              ThumbnailView(data: record.thumbnailData, height: record.height)
-                .scaledToFit()
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .overlay {
-                  RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color(.separator), lineWidth: 0.5)
-                }
-            }
-          } else {
-            ThumbnailView(data: record.thumbnailData, height: record.height)
-              .scaledToFit()
-          }
-          if viewModel.isLoadingImage {
-            ProgressView().tint(.white)
-          }
-        }
-      }
-    }
-    .task {
-      if viewModel.fullImage == nil {
-        await viewModel.loadImage(for: record)
-      }
-      if let img = viewModel.fullImage { onImageLoaded(img) }
-    }
-    .onChange(of: isCurrentPage) { _, isCurrent in
-      if isCurrent, let img = viewModel.fullImage { onImageLoaded(img) }
     }
   }
 }

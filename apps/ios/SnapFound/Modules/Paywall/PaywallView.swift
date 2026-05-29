@@ -32,7 +32,10 @@ struct PaywallView: View {
       if purchaseManager.isPro { dismiss() }
     }
     .onChange(of: purchaseManager.isPro) {
-      if purchaseManager.isPro { dismiss() }
+      if purchaseManager.isPro {
+        Haptics.notification(.success)
+        dismiss()
+      }
     }
   }
 
@@ -97,6 +100,7 @@ struct PaywallView: View {
       }
 
       Button {
+        Haptics.impact(.medium)
         Task { await viewModel.purchase(using: purchaseManager) }
       } label: {
         HStack {
@@ -115,6 +119,7 @@ struct PaywallView: View {
       .disabled(viewModel.isLoading || purchaseManager.product == nil)
 
       Button {
+        Haptics.selection()
         Task { await viewModel.restore(using: purchaseManager) }
       } label: {
         Text("Restore Purchase")
@@ -158,11 +163,9 @@ struct PaywallView: View {
 
   private var privacyNote: some View {
     Label {
-      Text(
-        "SnapFound never uploads your screenshots. No accounts, no servers, no tracking."
-      )
-      .font(.caption)
-      .foregroundStyle(.secondary)
+      Text("SnapFound never uploads your screenshots. No accounts, no servers, no tracking.")
+        .font(.caption)
+        .foregroundStyle(.secondary)
     } icon: {
       Image(systemName: "lock.shield")
         .foregroundStyle(.green)
