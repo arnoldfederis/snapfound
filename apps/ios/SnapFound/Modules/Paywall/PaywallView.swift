@@ -148,7 +148,7 @@ struct PaywallView: View {
         .font(.subheadline.weight(.medium))
         .foregroundStyle(.secondary)
       Text(
-        "Check your internet connection or try again later. Your purchase is safe — it's a one-time payment with no subscription."
+        "Check your internet connection or try again later. Your purchase is safe - it's a one-time payment with no subscription."
       )
       .font(.caption)
       .foregroundStyle(.secondary)

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { ThemeProvider } from "@/components/providers/theme";
 import "./globals.css";
 
 const inter = Inter({
@@ -9,22 +10,34 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SnapFound — Private screenshot search for iPhone",
+  title: "SnapFound - Private screenshot search for iPhone",
   description:
     "Find any screenshot instantly. SnapFound indexes your screenshots locally with on-device OCR, so your private information stays on your iPhone.",
   openGraph: {
-    title: "SnapFound — Find any screenshot instantly",
+    title: "SnapFound - Find any screenshot instantly",
     description:
       "Private screenshot search for iPhone. Local OCR, no account, no tracking, no cloud upload.",
     url: "https://snapfound.app",
     siteName: "SnapFound",
     type: "website",
+    images: ["/snapfound-og-image.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SnapFound — Find any screenshot instantly",
+    title: "SnapFound - Find any screenshot instantly",
     description:
       "Private screenshot search for iPhone. Local OCR, no account, no tracking, no cloud upload.",
+    images: ["/snapfound-twitter-image.png"],
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   metadataBase: new URL("https://snapfound.app"),
 };
@@ -35,8 +48,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className={`${inter.variable} h-full antialiased`} lang="en">
-      <body className="flex min-h-full flex-col">{children}</body>
+    <html
+      className={`${inter.variable} h-full antialiased`}
+      lang="en"
+      suppressHydrationWarning
+    >
+      <body className="flex min-h-full flex-col">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

@@ -1,7 +1,7 @@
 import SwiftUI
 @preconcurrency import Vision
 
-/// Actor executor is off the main thread — Vision's blocking perform() won't stall UI.
+/// Actor executor is off the main thread - Vision's blocking perform() won't stall UI.
 actor OCRService {
   static let shared = OCRService()
   private init() {}
@@ -13,7 +13,7 @@ actor OCRService {
         throw OCRError.invalidImage
       }
 
-      // No completion-handler API — read .results directly after perform() returns.
+      // No completion-handler API - read .results directly after perform() returns.
       // This avoids mutating captured vars inside a @Sendable closure.
       let request = VNRecognizeTextRequest()
       request.recognitionLevel = .accurate

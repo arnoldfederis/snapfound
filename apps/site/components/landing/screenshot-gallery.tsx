@@ -1,0 +1,63 @@
+import Image from "next/image";
+import { FadeIn } from "@/components/common/motion";
+
+export function ScreenshotGallery() {
+  return (
+    <section className="overflow-hidden py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        <FadeIn className="mx-auto mb-16 max-w-2xl text-center">
+          <h2 className="font-bold text-4xl leading-[1.1] tracking-tight sm:text-5xl">
+            Every screenshot. Instantly searchable.
+          </h2>
+          <p className="mt-5 text-lg text-muted-foreground leading-relaxed">
+            SnapFound reads the text in every screenshot you take and puts it
+            all at your fingertips. Search for anything you remember and find it
+            in seconds.
+          </p>
+        </FadeIn>
+
+        {/* 3-phone lineup, center elevated */}
+        <FadeIn
+          className="relative flex items-end justify-center gap-4 sm:gap-6"
+          delay={0.15}
+        >
+          {/* Glow */}
+          <div className="pointer-events-none absolute top-1/2 left-1/2 size-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl" />
+
+          {/* Left */}
+          <div className="relative translate-y-10 opacity-75">
+            <Image
+              alt="App screenshot"
+              className="h-auto w-44 sm:w-52"
+              height={2796}
+              src="/assets/device-4.png"
+              width={1419}
+            />
+          </div>
+
+          {/* Center — most prominent */}
+          <div className="relative z-10">
+            <Image
+              alt="App screenshot"
+              className="h-auto w-56 sm:w-64"
+              height={2796}
+              src="/assets/device-2.png"
+              width={1419}
+            />
+          </div>
+
+          {/* Right */}
+          <div className="relative translate-y-10 opacity-75">
+            <Image
+              alt="App screenshot"
+              className="h-auto w-44 sm:w-52"
+              height={2796}
+              src="/assets/device-3.png"
+              width={1419}
+            />
+          </div>
+        </FadeIn>
+      </div>
+    </section>
+  );
+}

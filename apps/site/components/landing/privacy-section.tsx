@@ -1,40 +1,41 @@
-import { Check, Minus } from "lucide-react";
+import { CheckCircle2Icon, MinusCircleIcon } from "lucide-react";
+import { FadeIn } from "@/components/common/motion";
 
 const SNAPFOUND = [
-  "Local OCR",
+  "Local OCR - text extraction happens on your iPhone",
   "No account required",
-  "No tracking",
+  "No tracking or analytics",
   "No cloud upload",
   "One-time unlock",
 ];
 
 const CLOUD_TOOLS = [
-  "Upload required",
-  "Account required",
-  "Possible ongoing cost",
-  "Less private for screenshots",
-  "Subscription model",
+  "Screenshots uploaded to remote servers",
+  "Account and login required",
+  "Possible ongoing or subscription cost",
+  "Less private for sensitive screenshot content",
+  "Often subscription-based",
 ];
 
 export function PrivacySection() {
   return (
-    <section className="py-24" id="privacy">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mb-16 text-center">
-          <h2 className="mb-4 font-bold text-3xl tracking-tight sm:text-4xl">
+    <section className="border-y bg-muted/30 py-20" id="privacy">
+      <div className="mx-auto max-w-6xl px-6">
+        <FadeIn className="mx-auto mb-14 max-w-2xl text-center">
+          <h2 className="font-bold text-3xl tracking-tight sm:text-4xl">
             Built for private screenshots.
           </h2>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+          <p className="mt-4 text-lg text-muted-foreground">
             Screenshots often contain sensitive information: addresses, codes,
             receipts, banking details, messages, and passwords. SnapFound is
             designed so OCR and search happen locally on your iPhone.
           </p>
-        </div>
+        </FadeIn>
 
-        <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-border">
-          {/* Table header */}
-          <div className="grid grid-cols-2 border-border border-b">
-            <div className="border-border border-r bg-primary/[0.06] px-6 py-4">
+        <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border bg-card">
+          {/* Header row */}
+          <div className="grid grid-cols-2 border-b">
+            <div className="border-r bg-primary/[0.03] px-6 py-4">
               <p className="font-semibold text-primary text-sm">SnapFound</p>
             </div>
             <div className="px-6 py-4">
@@ -44,22 +45,18 @@ export function PrivacySection() {
             </div>
           </div>
 
-          {/* Rows */}
+          {/* Data rows */}
           {SNAPFOUND.map((feature, i) => (
             <div
-              className="grid grid-cols-2 border-border border-b last:border-0"
+              className="grid grid-cols-2 border-b last:border-0"
               key={feature}
             >
-              <div className="flex items-center gap-2.5 border-border border-r bg-primary/[0.03] px-6 py-3.5">
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15">
-                  <Check className="h-3 w-3 text-primary" />
-                </div>
+              <div className="flex items-start gap-2.5 border-r bg-primary/[0.02] px-6 py-3.5">
+                <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" />
                 <span className="text-sm">{feature}</span>
               </div>
-              <div className="flex items-center gap-2.5 px-6 py-3.5">
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-border">
-                  <Minus className="h-3 w-3 text-muted-foreground" />
-                </div>
+              <div className="flex items-start gap-2.5 px-6 py-3.5">
+                <MinusCircleIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground/50" />
                 <span className="text-muted-foreground text-sm">
                   {CLOUD_TOOLS[i]}
                 </span>

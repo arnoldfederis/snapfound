@@ -1,56 +1,43 @@
-import { Search } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
 
-const YEAR = new Date().getFullYear();
+const LINKS = [
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
+  { label: "Support", href: "/support" },
+];
 
 export function Footer() {
   return (
-    <footer className="border-border border-t py-14">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
-          {/* Brand */}
-          <div>
-            <div className="mb-2 flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-primary">
-                <Search className="h-3.5 w-3.5 text-primary-foreground" />
-              </div>
-              <span className="font-semibold text-sm">SnapFound</span>
-            </div>
-            <p className="text-muted-foreground text-xs">
-              Private screenshot search for iPhone.
-            </p>
-          </div>
+    <footer className="border-t py-10">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 sm:flex-row sm:justify-between">
+        <a
+          className="flex items-center gap-2 font-bold text-sm tracking-tight"
+          href="/"
+        >
+          <Image
+            alt="App icon"
+            className="size-6"
+            height={128}
+            src="/favicon-128x128.png"
+            width={128}
+          />
+          SnapFound
+        </a>
 
-          {/* Links */}
-          <nav
-            aria-label="Footer navigation"
-            className="flex flex-col gap-2.5 sm:items-end"
-          >
+        <nav className="flex flex-wrap justify-center gap-6">
+          {LINKS.map((link) => (
             <a
-              className="text-muted-foreground text-xs transition-colors hover:text-foreground"
-              href="https://snapfound.app/privacy"
+              className="text-muted-foreground text-sm transition-colors hover:text-primary"
+              href={link.href}
+              key={link.href}
             >
-              Privacy Policy
+              {link.label}
             </a>
-            <a
-              className="text-muted-foreground text-xs transition-colors hover:text-foreground"
-              href="https://snapfound.app/support"
-            >
-              Support
-            </a>
-            <a
-              className="text-muted-foreground text-xs transition-colors hover:text-foreground"
-              href="mailto:hello@snapfound.app"
-            >
-              Contact
-            </a>
-          </nav>
-        </div>
+          ))}
+        </nav>
 
-        <Separator className="my-8" />
-
-        <p className="text-center text-muted-foreground text-xs">
-          &copy; {YEAR} SnapFound. All rights reserved.
+        <p className="text-muted-foreground text-xs">
+          © {new Date().getFullYear()} SnapFound
         </p>
       </div>
     </footer>

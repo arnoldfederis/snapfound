@@ -80,7 +80,7 @@ final class PhotoLibraryService {
     )
   }
 
-  /// Returns JPEG Data — Sendable-safe for actor boundary crossing.
+  /// Returns JPEG Data - Sendable-safe for actor boundary crossing.
   func loadFullImageData(for assetID: String) async throws -> Data {
     let result = PHAsset.fetchAssets(
       withLocalIdentifiers: [assetID],
@@ -160,7 +160,7 @@ final class PhotoLibraryService {
     }
   }
 
-  /// Loads UIImage for display — call from MainActor only.
+  /// Loads UIImage for display - call from MainActor only.
   func loadDisplayImage(for assetID: String, targetSize: CGSize) async throws
     -> UIImage
   {

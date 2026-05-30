@@ -61,7 +61,7 @@ struct DetailView: View {
   // MARK: - Pager
 
   // .ignoresSafeArea(edges:) with an empty set is a no-op, so we keep the same
-  // view instance in both states — SwiftUI can then animate the safe-area inset
+  // view instance in both states - SwiftUI can then animate the safe-area inset
   // change smoothly rather than destroying/recreating the view.
   private var pagerView: some View {
     mainPager

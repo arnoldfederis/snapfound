@@ -1,59 +1,54 @@
+import { FadeIn, Stagger, StaggerItem } from "@/components/common/motion";
+
 const STEPS = [
   {
-    number: "01",
-    title: "Allow screenshot access",
-    body: "SnapFound scans accessible screenshots from your Photos library. You stay in control of what's shared.",
+    step: "1",
+    title: "Take screenshots normally",
+    description:
+      "No change to your workflow. SnapFound works with screenshots already on your iPhone.",
   },
   {
-    number: "02",
-    title: "Index locally",
-    body: "OCR, tags, and metadata are created entirely on your iPhone. The searchable index never leaves your device.",
+    step: "2",
+    title: "SnapFound reads the text",
+    description:
+      "On-device OCR extracts the text from each screenshot automatically. Nothing leaves your device.",
   },
   {
-    number: "03",
-    title: "Search naturally",
-    body: 'Find screenshots by typing things like "receipt," "Wi-Fi password," or "flight from last month."',
+    step: "3",
+    title: "Search anything",
+    description:
+      "Type any word or phrase from a screenshot: a price, a code, a name. Find it instantly.",
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section className="py-24" id="how-it-works">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mb-16 text-center">
-          <h2 className="mb-4 font-bold text-3xl tracking-tight sm:text-4xl">
-            Private search in three steps.
+    <section className="border-y bg-muted/30 py-20" id="how-it-works">
+      <div className="mx-auto max-w-6xl px-6">
+        <FadeIn className="mx-auto mb-14 max-w-xl text-center">
+          <h2 className="font-bold text-3xl tracking-tight sm:text-4xl">
+            How it works.
           </h2>
-          <p className="mx-auto max-w-xl text-lg text-muted-foreground">
-            SnapFound is designed to be simple, private, and fast from the
-            start.
-          </p>
-        </div>
+        </FadeIn>
 
-        <div className="relative grid gap-10 sm:grid-cols-3">
-          {/* Connector */}
-          <div
-            aria-hidden
-            className="absolute top-11 right-0 left-0 hidden h-px bg-gradient-to-r from-transparent via-border to-transparent sm:block"
-          />
-
-          {STEPS.map(({ number, title, body }) => (
-            <div
-              className="relative flex flex-col items-center text-center"
-              key={number}
-            >
-              <div className="relative z-10 mb-7 flex h-[88px] w-[88px] items-center justify-center rounded-full border border-border bg-background shadow-sm">
-                <span className="font-extrabold text-3xl text-primary tracking-tight">
-                  {number}
+        <Stagger
+          className="mx-auto grid max-w-3xl gap-10 sm:grid-cols-3"
+          staggerDelay={0.1}
+        >
+          {STEPS.map((s) => (
+            <StaggerItem key={s.step}>
+              <div className="flex flex-col gap-3">
+                <span className="font-bold text-4xl text-primary/20 tabular-nums leading-none">
+                  {s.step}
                 </span>
+                <h3 className="font-semibold">{s.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {s.description}
+                </p>
               </div>
-              <h3 className="mb-3 font-semibold text-lg">{title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {body}
-              </p>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
       </div>
     </section>
   );

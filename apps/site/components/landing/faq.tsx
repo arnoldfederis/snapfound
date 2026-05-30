@@ -1,3 +1,4 @@
+import { FadeIn } from "@/components/common/motion";
 import {
   Accordion,
   AccordionContent,
@@ -24,7 +25,7 @@ const FAQS = [
   },
   {
     q: "Does it work offline?",
-    a: "Yes. Once screenshots are indexed, search works locally — no internet connection required.",
+    a: "Yes. Once screenshots are indexed, search works locally - no internet connection required.",
   },
   {
     q: "Is SnapFound a subscription?",
@@ -34,22 +35,31 @@ const FAQS = [
 
 export function FAQ() {
   return (
-    <section className="py-24" id="faq">
-      <div className="mx-auto max-w-2xl px-4 sm:px-6">
-        <div className="mb-14 text-center">
+    <section className="border-t py-20" id="faq">
+      <div className="mx-auto max-w-3xl px-6">
+        <FadeIn className="mb-14 text-center">
           <h2 className="font-bold text-3xl tracking-tight sm:text-4xl">
             Frequently asked questions
           </h2>
-        </div>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Everything you need to know about SnapFound.
+          </p>
+        </FadeIn>
 
-        <Accordion collapsible type="single">
-          {FAQS.map(({ q, a }) => (
-            <AccordionItem key={q} value={q}>
-              <AccordionTrigger>{q}</AccordionTrigger>
-              <AccordionContent>{a}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <FadeIn delay={0.2}>
+          <Accordion>
+            {FAQS.map(({ q, a }) => (
+              <AccordionItem key={q} value={q}>
+                <AccordionTrigger className="cursor-pointer">
+                  {q}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p>{a}</p>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </FadeIn>
       </div>
     </section>
   );
