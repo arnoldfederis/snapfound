@@ -2,6 +2,7 @@ FROM oven/bun:1 AS deps
 WORKDIR /app
 
 COPY package.json bun.lock turbo.json ./
+COPY apps/ios/package.json apps/ios/package.json
 COPY apps/site/package.json apps/site/package.json
 
 RUN bun install --frozen-lockfile
