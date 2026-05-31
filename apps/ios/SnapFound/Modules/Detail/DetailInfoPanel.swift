@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+internal import UIKit
 
 struct DetailInfoPanel: View {
   let record: ScreenshotRecord
@@ -47,6 +48,17 @@ struct DetailInfoPanel: View {
     return items
   }
 
+  private var extractedTextLines: [String] {
+    record.ocrText
+      .components(separatedBy: .newlines)
+      .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty }
+  }
+
+  private var displayedOCRText: String {
+    extractedTextLines.joined(separator: "\n")
+  }
+
   private var metadataSection: some View {
     Section("Info") {
       LabeledContent("Captured", value: record.creationDate.mediumDisplay)
@@ -57,21 +69,27 @@ struct DetailInfoPanel: View {
   @ViewBuilder
   private var ocrSection: some View {
     Section {
-      HStack(alignment: .top) {
-        Text(record.ocrText)
-          .font(.callout)
-          .foregroundStyle(.secondary)
-          .textSelection(.enabled)
-        Spacer()
+      ZStack(alignment: .topTrailing) {
+        SelectableTextView(text: displayedOCRText)
+          .padding(.trailing, 28)
+
         Button {
           copyExtractedText()
         } label: {
           Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
         }
+        .buttonStyle(.plain)
+        .foregroundStyle(.accent)
+        .padding(.top, 2)
         .animation(.easeInOut(duration: 0.2), value: isCopied)
+        .accessibilityLabel("Copy all extracted text")
       }
     } header: {
       Text("Extracted Text")
+    } footer: {
+      Text(
+        "Select any text above to copy just that portion, or tap the copy button to copy everything."
+      )
     }
   }
 
@@ -165,6 +183,42 @@ private struct ShareSheet: UIViewControllerRepresentable {
   }
 
   func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+private struct SelectableTextView: UIViewRepresentable {
+  let text: String
+
+  func makeUIView(context: Context) -> UITextView {
+    let textView = UITextView()
+    textView.isEditable = false
+    textView.isSelectable = true
+    textView.isScrollEnabled = false
+    textView.backgroundColor = .clear
+    textView.textContainerInset = .zero
+    textView.textContainer.lineFragmentPadding = 0
+    textView.adjustsFontForContentSizeCategory = true
+    textView.font = .preferredFont(forTextStyle: .body)
+    textView.textColor = .secondaryLabel
+    return textView
+  }
+
+  func updateUIView(_ textView: UITextView, context: Context) {
+    textView.text = text
+  }
+
+  func sizeThatFits(
+    _ proposal: ProposedViewSize,
+    uiView textView: UITextView,
+    context: Context
+  ) -> CGSize? {
+    let targetWidth = proposal.width ?? 0
+    guard targetWidth > 0 else { return nil }
+
+    let fittingSize = textView.sizeThatFits(
+      CGSize(width: targetWidth, height: .greatestFiniteMagnitude)
+    )
+    return CGSize(width: targetWidth, height: fittingSize.height)
+  }
 }
 
 #Preview {
