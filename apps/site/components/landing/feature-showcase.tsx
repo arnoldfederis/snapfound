@@ -15,11 +15,20 @@ const SHOWCASES = [
   {
     id: "privacy",
     eyebrow: "Private by design",
-    headline: "Your data never leaves your iPhone.",
-    body: "On-device OCR means text extraction happens entirely on your phone. No account, no cloud upload, no tracking. Delete the local index anytime.",
+    headline: "Your screenshots stay on your iPhone.",
+    body: "Text extraction happens on your device using Apple's on-device OCR. No account required, no screenshot uploads, no tracking. Delete the local index anytime.",
     phoneFirst: true,
     muted: true,
     src: "/assets/device-3.png",
+  },
+  {
+    id: "screenshots",
+    eyebrow: "Your screenshot library",
+    headline: "Every screenshot, beautifully organized.",
+    body: "Browse all your screenshots in a clean date-grouped grid. Switch between 2, 3, or 4 columns to suit how you browse.",
+    phoneFirst: false,
+    muted: false,
+    src: "/assets/device-4.png",
   },
 ];
 

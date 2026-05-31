@@ -38,7 +38,7 @@ direnv allow
 ## run the env-decrypt script
 env-decrypt
 
-# Rename all instances of `imeetly` to your project name
+# Rename all instances of `snapfound` to your project name
 # then proceed to Getting Started
 
 ## run the init-local script
@@ -67,7 +67,7 @@ direnv allow
 ## run the env-decrypt script
 env-decrypt
 
-# Rename all instances of `imeetly` to your project name
+# Rename all instances of `snapfound` to your project name
 # then proceed to Getting Started
 ```
 

@@ -11,19 +11,19 @@ const STEPS = [
     step: "2",
     title: "SnapFound reads the text",
     description:
-      "On-device OCR extracts the text from each screenshot automatically. Nothing leaves your device.",
+      "On-device OCR extracts the text from each screenshot during indexing. Text extraction happens entirely on your iPhone.",
   },
   {
     step: "3",
-    title: "Search anything",
+    title: "Search what you remember",
     description:
-      "Type any word or phrase from a screenshot: a price, a code, a name. Find it instantly.",
+      "Type a word or phrase from a screenshot, like a price, code, name, or booking reference.",
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section className="border-y bg-muted/30 py-20" id="how-it-works">
+    <section className="py-24" id="how-it-works">
       <div className="mx-auto max-w-6xl px-6">
         <FadeIn className="mx-auto mb-14 max-w-xl text-center">
           <h2 className="font-bold text-3xl tracking-tight sm:text-4xl">

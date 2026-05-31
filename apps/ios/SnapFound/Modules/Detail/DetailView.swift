@@ -216,6 +216,7 @@ struct DetailView: View {
           try? modelContext.save()
           dismiss()
         }
+        .presentationDetents([.medium, .large])
       }
   }
 }

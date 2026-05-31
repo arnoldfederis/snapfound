@@ -3,16 +3,16 @@ import { FadeIn } from "@/components/common/motion";
 
 export function ScreenshotGallery() {
   return (
-    <section className="overflow-hidden py-24">
+    <section className="overflow-hidden border-y bg-muted/40 py-24">
       <div className="mx-auto max-w-6xl px-6">
         <FadeIn className="mx-auto mb-16 max-w-2xl text-center">
           <h2 className="font-bold text-4xl leading-[1.1] tracking-tight sm:text-5xl">
-            Every screenshot. Instantly searchable.
+            Make your screenshots instantly searchable.
           </h2>
           <p className="mt-5 text-lg text-muted-foreground leading-relaxed">
-            SnapFound reads the text in every screenshot you take and puts it
-            all at your fingertips. Search for anything you remember and find it
-            in seconds.
+            SnapFound reads text from your indexed screenshots and makes them
+            easy to find later. Search for a word, code, receipt, booking, or
+            note and get back to the right screenshot quickly.
           </p>
         </FadeIn>
 
@@ -30,7 +30,7 @@ export function ScreenshotGallery() {
               alt="App screenshot"
               className="h-auto w-44 sm:w-52"
               height={2796}
-              src="/assets/device-4.png"
+              src="/assets/device-7.png"
               width={1419}
             />
           </div>
@@ -52,7 +52,7 @@ export function ScreenshotGallery() {
               alt="App screenshot"
               className="h-auto w-44 sm:w-52"
               height={2796}
-              src="/assets/device-3.png"
+              src="/assets/device-5.png"
               width={1419}
             />
           </div>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme";
 import "./globals.css";
@@ -10,9 +10,35 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://snapfound.app"),
   title: "SnapFound - Private screenshot search for iPhone",
   description:
     "Find any screenshot instantly. SnapFound indexes your screenshots locally with on-device OCR, so your private information stays on your iPhone.",
+  applicationName: "SnapFound",
+  keywords: [
+    "screenshot search",
+    "iPhone screenshots",
+    "OCR",
+    "private search",
+    "local OCR",
+    "on-device OCR",
+    "screenshot organizer",
+    "photo search",
+    "receipts",
+    "Wi-Fi password",
+    "order confirmation",
+  ],
+  robots: {
+    index: true,
+    follow: true,
+  },
+  appleWebApp: {
+    title: "SnapFound",
+    capable: true,
+  },
+  alternates: {
+    canonical: "https://snapfound.app",
+  },
   openGraph: {
     title: "SnapFound - Find any screenshot instantly",
     description:
@@ -20,14 +46,22 @@ export const metadata: Metadata = {
     url: "https://snapfound.app",
     siteName: "SnapFound",
     type: "website",
-    images: ["/snapfound-og-image.png"],
+    locale: "en_US",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "SnapFound - Find any screenshot instantly",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "SnapFound - Find any screenshot instantly",
     description:
       "Private screenshot search for iPhone. Local OCR, no account, no tracking, no cloud upload.",
-    images: ["/snapfound-twitter-image.png"],
+    images: ["/opengraph-image"],
   },
   icons: {
     icon: [
@@ -39,7 +73,11 @@ export const metadata: Metadata = {
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
-  metadataBase: new URL("https://snapfound.app"),
+  manifest: "/site.webmanifest",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#6468F0",
 };
 
 export default function RootLayout({

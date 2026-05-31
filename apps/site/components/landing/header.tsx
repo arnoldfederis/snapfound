@@ -19,7 +19,7 @@ export function Header() {
             alt="App icon"
             className="size-8"
             height={128}
-            src="/favicon-128x128.png"
+            src="/snapfound-icon-128x128.png"
             width={128}
           />
           SnapFound

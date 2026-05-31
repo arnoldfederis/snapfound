@@ -19,9 +19,9 @@ export function Hero() {
 
         <FadeIn delay={0.1}>
           <p className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground leading-relaxed">
-            SnapFound indexes your screenshots with on-device OCR. Search
-            receipts, Wi-Fi passwords, order confirmations, privately on your
-            iPhone.
+            SnapFound indexes your screenshots with on-device OCR, so you can
+            find receipts, Wi-Fi passwords, order confirmations, and more
+            without uploading your screenshots.
           </p>
         </FadeIn>
 
@@ -33,7 +33,7 @@ export function Hero() {
             </a>
             <a
               className={buttonVariants({ variant: "secondary", size: "lg" })}
-              href="#features"
+              href="#how-it-works"
             >
               See how it works
             </a>
@@ -56,6 +56,7 @@ export function Hero() {
             alt="App screenshot"
             className="h-auto w-65 sm:w-75"
             height={2796}
+            loading="eager"
             src="/assets/device-1.png"
             width={1419}
           />

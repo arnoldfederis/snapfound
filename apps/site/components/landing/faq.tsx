@@ -9,7 +9,7 @@ import {
 const FAQS = [
   {
     q: "Does SnapFound upload my screenshots?",
-    a: "No. OCR, tagging, indexing, and search all happen locally on your iPhone. Your screenshots never leave your device.",
+    a: "No. OCR, tagging, indexing, and search all happen on your iPhone. Your screenshots, OCR text, and search queries are not uploaded.",
   },
   {
     q: "Does SnapFound need an account?",
@@ -21,7 +21,7 @@ const FAQS = [
   },
   {
     q: "What can I search for?",
-    a: "Receipts, Wi-Fi passwords, order confirmations, flights, bookings, error messages, verification codes, notes, maps, and more. Anything that appears as text in a screenshot.",
+    a: "Receipts, Wi-Fi passwords, order confirmations, flights, bookings, error messages, verification codes, notes, and more. Any text that appears in an indexed screenshot.",
   },
   {
     q: "Does it work offline?",
@@ -29,14 +29,14 @@ const FAQS = [
   },
   {
     q: "Is SnapFound a subscription?",
-    a: "No. SnapFound Pro is a one-time unlock. Pay once and use it forever with no recurring charges.",
+    a: "No. SnapFound Pro is a one-time purchase with no recurring charges.",
   },
 ];
 
 export function FAQ() {
   return (
-    <section className="border-t py-20" id="faq">
-      <div className="mx-auto max-w-3xl px-6">
+    <section className="border-t bg-muted/40 py-24" id="faq">
+      <div className="mx-auto max-w-3xl">
         <FadeIn className="mb-14 text-center">
           <h2 className="font-bold text-3xl tracking-tight sm:text-4xl">
             Frequently asked questions
@@ -47,7 +47,7 @@ export function FAQ() {
         </FadeIn>
 
         <FadeIn delay={0.2}>
-          <Accordion>
+          <Accordion className="border-0">
             {FAQS.map(({ q, a }) => (
               <AccordionItem key={q} value={q}>
                 <AccordionTrigger className="cursor-pointer">

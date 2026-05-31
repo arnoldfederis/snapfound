@@ -1,4 +1,8 @@
+"use client";
+
 import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const LINKS = [
   { label: "Privacy", href: "/privacy" },
@@ -7,6 +11,8 @@ const LINKS = [
 ];
 
 export function Footer() {
+  const path = usePathname();
+
   return (
     <footer className="border-t py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 sm:flex-row sm:justify-between">
@@ -18,7 +24,7 @@ export function Footer() {
             alt="App icon"
             className="size-6"
             height={128}
-            src="/favicon-128x128.png"
+            src="/snapfound-icon-128x128.png"
             width={128}
           />
           SnapFound
@@ -27,7 +33,12 @@ export function Footer() {
         <nav className="flex flex-wrap justify-center gap-6">
           {LINKS.map((link) => (
             <a
-              className="text-muted-foreground text-sm transition-colors hover:text-primary"
+              className={cn(
+                "text-muted-foreground text-sm transition-colors hover:text-primary",
+                {
+                  "text-primary": path === link.href,
+                },
+              )}
               href={link.href}
               key={link.href}
             >
