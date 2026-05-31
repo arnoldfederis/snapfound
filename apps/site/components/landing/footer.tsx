@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { iconBlurDataURL } from "@/lib/image-placeholders";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -22,8 +23,11 @@ export function Footer() {
         >
           <Image
             alt="App icon"
+            blurDataURL={iconBlurDataURL}
             className="size-6"
             height={128}
+            loading="eager"
+            placeholder="blur"
             src="/snapfound-icon-128x128.png"
             width={128}
           />

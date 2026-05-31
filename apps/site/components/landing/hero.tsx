@@ -3,6 +3,7 @@ import Image from "next/image";
 import { FadeIn } from "@/components/common/motion";
 import { PhoneMockup } from "@/components/common/phone-mockup";
 import { buttonVariants } from "@/components/ui/button";
+import { deviceBlurDataURL } from "@/lib/image-placeholders";
 
 // TODO: Replace with actual App Store URL when available
 const APP_STORE_URL = "#";
@@ -54,9 +55,11 @@ export function Hero() {
         <PhoneMockup className="relative">
           <Image
             alt="App screenshot"
+            blurDataURL={deviceBlurDataURL}
             className="h-auto w-65 sm:w-75"
             height={2796}
             loading="eager"
+            placeholder="blur"
             src="/assets/device-1.png"
             width={1419}
           />

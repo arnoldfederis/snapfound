@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { FadeIn } from "@/components/common/motion";
+import { deviceBlurDataURL } from "@/lib/image-placeholders";
 
 export function ScreenshotGallery() {
   return (
@@ -28,8 +29,11 @@ export function ScreenshotGallery() {
           <div className="relative translate-y-10 opacity-75">
             <Image
               alt="App screenshot"
+              blurDataURL={deviceBlurDataURL}
               className="h-auto w-44 sm:w-52"
               height={2796}
+              loading="eager"
+              placeholder="blur"
               src="/assets/device-7.png"
               width={1419}
             />
@@ -39,8 +43,11 @@ export function ScreenshotGallery() {
           <div className="relative z-10">
             <Image
               alt="App screenshot"
+              blurDataURL={deviceBlurDataURL}
               className="h-auto w-56 sm:w-64"
               height={2796}
+              loading="eager"
+              placeholder="blur"
               src="/assets/device-2.png"
               width={1419}
             />
@@ -50,8 +57,11 @@ export function ScreenshotGallery() {
           <div className="relative translate-y-10 opacity-75">
             <Image
               alt="App screenshot"
+              blurDataURL={deviceBlurDataURL}
               className="h-auto w-44 sm:w-52"
               height={2796}
+              loading="eager"
+              placeholder="blur"
               src="/assets/device-5.png"
               width={1419}
             />

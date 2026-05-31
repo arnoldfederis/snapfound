@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { FadeIn } from "@/components/common/motion";
 import { PhoneMockup } from "@/components/common/phone-mockup";
+import { deviceBlurDataURL } from "@/lib/image-placeholders";
 
 const SHOWCASES = [
   {
@@ -67,8 +68,11 @@ export function FeatureShowcase() {
                   <PhoneMockup className="relative">
                     <Image
                       alt="App screenshot"
+                      blurDataURL={deviceBlurDataURL}
                       className="h-auto w-65 sm:w-75"
                       height={2796}
+                      loading="eager"
+                      placeholder="blur"
                       src={s.src}
                       width={1419}
                     />
