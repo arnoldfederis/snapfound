@@ -37,7 +37,7 @@ export function FAQ() {
   return (
     <section className="border-t bg-muted/40 py-24" id="faq">
       <div className="mx-auto max-w-3xl">
-        <FadeIn className="mb-14 text-center">
+        <FadeIn className="mb-14 px-6 text-center">
           <h2 className="font-bold text-3xl tracking-tight sm:text-4xl">
             Frequently asked questions
           </h2>
@@ -47,7 +47,7 @@ export function FAQ() {
         </FadeIn>
 
         <FadeIn delay={0.2}>
-          <Accordion className="border-0">
+          <Accordion className="border-0 px-2 sm:px-0">
             {FAQS.map(({ q, a }) => (
               <AccordionItem key={q} value={q}>
                 <AccordionTrigger className="cursor-pointer">
