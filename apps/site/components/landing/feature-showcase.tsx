@@ -71,7 +71,6 @@ export function FeatureShowcase() {
                       blurDataURL={deviceBlurDataURL}
                       className="h-auto w-65 sm:w-75"
                       height={2796}
-                      loading="eager"
                       placeholder="blur"
                       src={s.src}
                       width={1419}

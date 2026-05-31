@@ -26,7 +26,6 @@ export function Footer() {
             blurDataURL={iconBlurDataURL}
             className="size-6"
             height={128}
-            loading="eager"
             placeholder="blur"
             src="/snapfound-icon-128x128.png"
             width={128}
