@@ -47,7 +47,7 @@ export function FAQ() {
         </FadeIn>
 
         <FadeIn delay={0.2}>
-          <Accordion className="border-0 px-2 sm:px-0">
+          <Accordion className="border-0 px-2 md:px-0">
             {FAQS.map(({ q, a }) => (
               <AccordionItem key={q} value={q}>
                 <AccordionTrigger className="cursor-pointer">

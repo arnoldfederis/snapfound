@@ -46,7 +46,10 @@ struct SettingsView: View {
         Text("SnapFound is already indexing your screenshots. Please wait for it to finish.")
       }
       .sheet(isPresented: $showPaywall) {
-        PaywallView()
+        PaywallView {
+          viewModel.indexNew(modelContext: modelContext, isPro: purchaseManager.isPro)
+          dismiss()
+        }
       }
     }
   }
@@ -100,6 +103,7 @@ struct SettingsView: View {
       } label: {
         Label("Index New Screenshots", systemImage: "arrow.clockwise")
       }
+      .tint(.accentColor)
 
       Button {
         Haptics.selection()
@@ -107,13 +111,16 @@ struct SettingsView: View {
       } label: {
         Label("Manage Photos Permission", systemImage: "photo.badge.shield.exclamationmark")
       }
+      .tint(.accentColor)
 
-      Button {
-        Haptics.impact(.medium)
-        viewModel.showRebuildConfirmation = true
-      } label: {
-        Label("Rebuild Full Index", systemImage: "arrow.2.circlepath")
-          .foregroundStyle(.orange)
+      if !records.isEmpty {
+        Button {
+          Haptics.impact(.medium)
+          viewModel.showRebuildConfirmation = true
+        } label: {
+          Label("Rebuild Full Index", systemImage: "arrow.2.circlepath")
+        }
+        .tint(.accentColor)
       }
 
       Button(role: .destructive) {
@@ -140,6 +147,7 @@ struct SettingsView: View {
         } label: {
           Label("Unlock Unlimited Indexing", systemImage: "sparkles")
         }
+        .tint(.accentColor)
       }
 
       Button {
@@ -147,8 +155,8 @@ struct SettingsView: View {
         Task { await purchaseManager.restorePurchases() }
       } label: {
         Label("Restore Purchase", systemImage: "arrow.clockwise.circle")
-          .foregroundStyle(.secondary)
       }
+      .tint(.accentColor)
     }
   }
 
@@ -157,10 +165,16 @@ struct SettingsView: View {
     Section("About") {
       LabeledContent("Version", value: Bundle.main.appVersionString)
       Button {
-        openURL(URL(string: "https://snapfound.app/privacy")!, prefersInApp: true)
+        if #available(iOS 26.0, *) {
+          openURL(URL(string: "https://snapfound.app/privacy")!, prefersInApp: true)
+        } else {
+          // Fallback on earlier versions
+          UIApplication.shared.open(URL(string: "https://snapfound.app/privacy")!)
+        }
       } label: {
         Label("Privacy Policy", systemImage: "hand.raised")
       }
+      .tint(.accentColor)
     }
   }
 }

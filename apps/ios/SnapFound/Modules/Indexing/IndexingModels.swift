@@ -1,5 +1,16 @@
 import Foundation
 
+struct IndexingRunSummary: Equatable {
+  let indexedCount: Int
+  let skippedCloudCount: Int
+  let skippedOtherCount: Int
+  let totalIndexedCount: Int
+
+  var hasSkips: Bool {
+    skippedCloudCount > 0 || skippedOtherCount > 0
+  }
+}
+
 struct IndexingProgress {
   let total: Int
   let completed: Int

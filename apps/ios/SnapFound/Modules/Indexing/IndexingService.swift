@@ -10,6 +10,7 @@ final class IndexingService {
 
   private(set) var state: IndexingState = .idle
   private(set) var progress: IndexingProgress = .idle
+  private(set) var lastRunSummary: IndexingRunSummary?
 
   static let freeIndexLimit = 50
 
@@ -31,6 +32,7 @@ final class IndexingService {
   }
 
   func indexScreenshots(modelContext: ModelContext, isPro: Bool) async {
+    lastRunSummary = nil
     let existingIDs = fetchExistingIDs(modelContext: modelContext)
     let existingCount = existingIDs.count
 
@@ -54,6 +56,8 @@ final class IndexingService {
     state = .indexing(progress)
 
     var indexed = 0
+    var skippedCloud = 0
+    var skippedOther = 0
     for asset in newAssets {
       if indexed >= targetSuccessfulIndexes {
         break
@@ -72,6 +76,11 @@ final class IndexingService {
         try? modelContext.save()
         indexed += 1
       } catch {
+        if case PhotoLibraryError.cloudAssetUnavailableOffline = error {
+          skippedCloud += 1
+        } else {
+          skippedOther += 1
+        }
         #if DEBUG
           print("[IndexingService] skip \(asset.localIdentifier): \(error)")
         #endif
@@ -79,6 +88,12 @@ final class IndexingService {
     }
 
     let finalCount = existingCount + indexed
+    lastRunSummary = IndexingRunSummary(
+      indexedCount: indexed,
+      skippedCloudCount: skippedCloud,
+      skippedOtherCount: skippedOther,
+      totalIndexedCount: finalCount
+    )
     progress = IndexingProgress(
       total: progressTotal,
       completed: min(indexed, progressTotal),
@@ -97,6 +112,7 @@ final class IndexingService {
   }
 
   func reindex(record: ScreenshotRecord, modelContext: ModelContext) async throws {
+    lastRunSummary = nil
     guard let asset = photoService.fetchScreenshot(localIdentifier: record.assetID) else {
       let error = IndexingError.assetUnavailable
       state = .failed(error)
@@ -116,9 +132,23 @@ final class IndexingService {
       record.thumbnailData = updatedRecord.thumbnailData
       record.indexedAt = Date()
       try modelContext.save()
+      lastRunSummary = IndexingRunSummary(
+        indexedCount: 1,
+        skippedCloudCount: 0,
+        skippedOtherCount: 0,
+        totalIndexedCount: fetchExistingIDs(modelContext: modelContext).count
+      )
       progress = IndexingProgress(total: 1, completed: 1, currentAssetID: nil)
       state = .completed(fetchExistingIDs(modelContext: modelContext).count)
     } catch {
+      if case PhotoLibraryError.cloudAssetUnavailableOffline = error {
+        lastRunSummary = IndexingRunSummary(
+          indexedCount: 0,
+          skippedCloudCount: 1,
+          skippedOtherCount: 0,
+          totalIndexedCount: fetchExistingIDs(modelContext: modelContext).count
+        )
+      }
       state = .failed(error)
       throw error
     }
@@ -133,6 +163,7 @@ final class IndexingService {
     try? modelContext.save()
     state = .idle
     progress = .idle
+    lastRunSummary = nil
   }
 
   // MARK: - Private

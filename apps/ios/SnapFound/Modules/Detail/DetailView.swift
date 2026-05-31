@@ -152,7 +152,7 @@ struct DetailView: View {
               }
               .padding(.horizontal, 46)
             }
-            .buttonStyle(.glass)
+            .glassButton()
           }
         }
 
@@ -202,6 +202,7 @@ struct DetailView: View {
             Button("Remove", role: .destructive) {
               modelContext.delete(currentRecord)
               try? modelContext.save()
+              RecentlyOpenedStore.remove(assetIDs: [currentRecord.assetID])
               dismiss()
             }
             Button("Cancel", role: .cancel) {}
@@ -214,6 +215,7 @@ struct DetailView: View {
         DetailInfoPanel(record: currentRecord, image: currentPageImage) {
           modelContext.delete(currentRecord)
           try? modelContext.save()
+          RecentlyOpenedStore.remove(assetIDs: [currentRecord.assetID])
           dismiss()
         }
         .presentationDetents([.medium, .large])
@@ -229,6 +231,17 @@ private struct TransferableImage: Transferable {
   static var transferRepresentation: some TransferRepresentation {
     DataRepresentation(exportedContentType: .png) {
       $0.uiImage.pngData() ?? Data()
+    }
+  }
+}
+
+extension View {
+  @ViewBuilder
+  func glassButton() -> some View {
+    if #available(iOS 26.0, *) {
+      self.buttonStyle(.glass)
+    } else {
+      self.buttonStyle(.automatic)
     }
   }
 }

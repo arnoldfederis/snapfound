@@ -5,7 +5,14 @@ struct PaywallView: View {
   @Environment(PurchaseManager.self) private var purchaseManager
   @Environment(\.dismiss) private var dismiss
 
+  let onIndexNow: (@MainActor () -> Void)?
+
   @State private var viewModel = PaywallViewModel()
+  @State private var showPurchaseConfirmation = false
+
+  init(onIndexNow: (@MainActor () -> Void)? = nil) {
+    self.onIndexNow = onIndexNow
+  }
 
   var body: some View {
     NavigationStack {
@@ -31,11 +38,19 @@ struct PaywallView: View {
     .onAppear {
       if purchaseManager.isPro { dismiss() }
     }
-    .onChange(of: purchaseManager.isPro) {
-      if purchaseManager.isPro {
+    .alert("Purchase Complete", isPresented: $showPurchaseConfirmation) {
+      Button("Index Now") {
         Haptics.notification(.success)
+        onIndexNow?()
         dismiss()
       }
+      .tint(.accentColor)
+
+      Button("Cancel", role: .cancel) {
+        dismiss()
+      }
+    } message: {
+      Text("SnapFound Pro is unlocked. Index your screenshots now?")
     }
   }
 
@@ -101,7 +116,11 @@ struct PaywallView: View {
 
       Button {
         Haptics.impact(.medium)
-        Task { await viewModel.purchase(using: purchaseManager) }
+        Task {
+          if await viewModel.purchase(using: purchaseManager) {
+            showPurchaseConfirmation = true
+          }
+        }
       } label: {
         HStack {
           if viewModel.isLoading {
@@ -116,16 +135,22 @@ struct PaywallView: View {
         .background(.tint, in: RoundedRectangle(cornerRadius: 14))
         .foregroundStyle(.white)
       }
+      .tint(.accentColor)
       .disabled(viewModel.isLoading || purchaseManager.product == nil)
 
       Button {
         Haptics.selection()
-        Task { await viewModel.restore(using: purchaseManager) }
+        Task {
+          if await viewModel.restore(using: purchaseManager) {
+            Haptics.notification(.success)
+            dismiss()
+          }
+        }
       } label: {
         Text("Restore Purchase")
           .font(.subheadline)
-          .foregroundStyle(.secondary)
       }
+      .tint(.accentColor)
       .disabled(viewModel.isLoading)
 
       if let error = viewModel.errorMessage {

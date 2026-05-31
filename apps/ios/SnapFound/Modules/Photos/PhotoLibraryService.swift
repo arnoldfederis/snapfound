@@ -10,6 +10,8 @@ final class PhotoLibraryService {
     var didResume = false
   }
 
+  private let photosErrorDomain = PHPhotosError.errorDomain
+
   var authorizationStatus: PhotosAuthStatus {
     switch PHPhotoLibrary.authorizationStatus(for: .readWrite) {
     case .notDetermined: .notDetermined
@@ -93,7 +95,7 @@ final class PhotoLibraryService {
     return try await withCheckedThrowingContinuation { continuation in
       let options = PHImageRequestOptions()
       options.deliveryMode = .highQualityFormat
-      options.isNetworkAccessAllowed = false
+      options.isNetworkAccessAllowed = true
       options.isSynchronous = false
       options.version = .current
 
@@ -105,12 +107,16 @@ final class PhotoLibraryService {
       ) { data, _, _, info in
         guard !state.didResume else { return }
 
-        if let error = info?[PHImageErrorKey] as? Error {
+        if let error = info?[PHImageErrorKey] as? NSError {
           state.didResume = true
-          continuation.resume(throwing: error)
+          continuation.resume(
+            throwing: self.mapImageRequestError(error, assetID: assetID, info: info))
         } else if let isCancelled = info?[PHImageCancelledKey] as? Bool, isCancelled {
           state.didResume = true
           continuation.resume(throwing: PhotoLibraryError.imageLoadFailed)
+        } else if let isInCloud = info?[PHImageResultIsInCloudKey] as? Bool, isInCloud {
+          state.didResume = true
+          continuation.resume(throwing: PhotoLibraryError.cloudAssetUnavailableOffline(assetID))
         } else if let data {
           state.didResume = true
           continuation.resume(returning: data)
@@ -134,7 +140,7 @@ final class PhotoLibraryService {
     return try await withCheckedThrowingContinuation { continuation in
       let options = PHImageRequestOptions()
       options.deliveryMode = .opportunistic
-      options.isNetworkAccessAllowed = false
+      options.isNetworkAccessAllowed = true
 
       let state = RequestState()
 
@@ -175,7 +181,7 @@ final class PhotoLibraryService {
     return try await withCheckedThrowingContinuation { continuation in
       let options = PHImageRequestOptions()
       options.deliveryMode = .highQualityFormat
-      options.isNetworkAccessAllowed = false
+      options.isNetworkAccessAllowed = true
 
       let state = RequestState()
 
@@ -220,15 +226,38 @@ final class PhotoLibraryService {
       }
     }
   }
+
+  private func mapImageRequestError(
+    _ error: NSError,
+    assetID: String,
+    info: [AnyHashable: Any]?
+  ) -> Error {
+    if error.domain == photosErrorDomain {
+      if error.code == PHPhotosError.Code.networkAccessRequired.rawValue
+        || error.code == PHPhotosError.Code.networkError.rawValue
+      {
+        return PhotoLibraryError.cloudAssetUnavailableOffline(assetID)
+      }
+    }
+
+    if let isInCloud = info?[PHImageResultIsInCloudKey] as? Bool, isInCloud {
+      return PhotoLibraryError.cloudAssetUnavailableOffline(assetID)
+    }
+
+    return error
+  }
 }
 
 enum PhotoLibraryError: LocalizedError {
   case assetNotFound(String)
+  case cloudAssetUnavailableOffline(String)
   case imageLoadFailed
 
   var errorDescription: String? {
     switch self {
     case .assetNotFound(let id): "Photo asset not found: \(id)"
+    case .cloudAssetUnavailableOffline:
+      "This screenshot is stored in iCloud and couldn't be downloaded right now."
     case .imageLoadFailed: "Failed to load image from Photos"
     }
   }

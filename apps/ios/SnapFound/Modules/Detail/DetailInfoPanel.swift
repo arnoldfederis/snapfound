@@ -10,7 +10,6 @@ struct DetailInfoPanel: View {
   @Environment(\.dismiss) private var dismiss
   @State private var isCopied = false
   @State private var isSharePresented = false
-  @State private var showDeleteAlert = false
   @State private var showPhotosOpenError = false
   @State private var isReindexing = false
   @State private var reindexErrorMessage: String?
@@ -33,15 +32,6 @@ struct DetailInfoPanel: View {
     }
     .sheet(isPresented: $isSharePresented) {
       ShareSheet(items: shareItems).presentationDetents([.medium, .large])
-    }
-    .alert("Delete from Index?", isPresented: $showDeleteAlert) {
-      Button("Delete from Index", role: .destructive) {
-        onDelete()
-        dismiss()
-      }
-      Button("Cancel", role: .cancel) {}
-    } message: {
-      Text("The index entry will be removed. Your original photo is not deleted.")
     }
     .alert("Couldn’t Open Photos", isPresented: $showPhotosOpenError) {
       Button("OK", role: .cancel) {}
@@ -103,20 +93,23 @@ struct DetailInfoPanel: View {
 
   private var actionsSection: some View {
     Section {
-      Button {
-        copyExtractedText()
-      } label: {
-        Label(
-          isCopied ? "Copied Text" : "Copy Extracted Text",
-          systemImage: isCopied ? "checkmark" : "doc.on.doc")
+      if !record.ocrText.isEmpty {
+        Button {
+          copyExtractedText()
+        } label: {
+          Label(
+            isCopied ? "Copied Text" : "Copy Extracted Text",
+            systemImage: isCopied ? "checkmark" : "doc.on.doc"
+          )
+          .foregroundStyle(.accent)
+        }
       }
-      .disabled(record.ocrText.isEmpty)
 
       Button {
         Haptics.impact(.light)
         isSharePresented = true
       } label: {
-        Label("Share Screenshot", systemImage: "square.and.arrow.up")
+        Label("Share Text and Screenshot", systemImage: "square.and.arrow.up")
       }
       .disabled(shareItems.isEmpty)
 
@@ -130,13 +123,6 @@ struct DetailInfoPanel: View {
         .foregroundStyle(.accent)
       }
       .disabled(isReindexing)
-
-      Button(role: .destructive) {
-        Haptics.notification(.warning)
-        showDeleteAlert = true
-      } label: {
-        Label("Delete from Index", systemImage: "trash").foregroundStyle(.red)
-      }
     } footer: {
       if let reindexErrorMessage {
         Text(reindexErrorMessage)

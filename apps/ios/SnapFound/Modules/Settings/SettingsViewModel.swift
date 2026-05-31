@@ -14,6 +14,7 @@ final class SettingsViewModel {
 
   func deleteIndex(modelContext: ModelContext) {
     indexingService.deleteIndex(modelContext: modelContext)
+    RecentlyOpenedStore.clear()
     Haptics.notification(.success)
   }
 
