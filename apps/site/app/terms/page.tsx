@@ -1,14 +1,20 @@
-// This page is a starting template and should be reviewed before launch.
-
 import { ArrowLeftIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { Footer } from "@/components/landing/footer";
 import { Header } from "@/components/landing/header";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — SnapFound",
+  title: "Terms of Service - SnapFound",
   description:
     "Terms for using SnapFound, a private screenshot search app for iPhone.",
+  alternates: {
+    canonical: "https://snapfound.app/terms",
+  },
+  openGraph: {
+    title: "Terms of Service - SnapFound",
+    description:
+      "Terms for using SnapFound, a private screenshot search app for iPhone.",
+  },
 };
 
 const EFFECTIVE_DATE = "May 30, 2026";
@@ -58,8 +64,9 @@ export default function TermsPage() {
             <h2 className="mb-3 font-semibold">What SnapFound Does</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
               SnapFound helps you index and search your screenshots locally on
-              your iPhone using on-device OCR and local search. No screenshots
-              or data are sent to external servers.
+              your iPhone using on-device OCR and local search. SnapFound does
+              not send your screenshots, OCR text, search queries, or screenshot
+              metadata to external servers.
             </p>
           </section>
 
@@ -210,9 +217,9 @@ export default function TermsPage() {
               Questions about these Terms? Reach out at{" "}
               <a
                 className="text-primary underline underline-offset-3 hover:text-primary/80"
-                href="mailto:arnoldfederis@gmail.com"
+                href="mailto:support@snapfound.app"
               >
-                arnoldfederis@gmail.com
+                support@snapfound.app
               </a>
               .
             </p>

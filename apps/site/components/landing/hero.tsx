@@ -3,6 +3,7 @@ import Image from "next/image";
 import { FadeIn } from "@/components/common/motion";
 import { PhoneMockup } from "@/components/common/phone-mockup";
 import { buttonVariants } from "@/components/ui/button";
+import { deviceBlurDataURL } from "@/lib/image-placeholders";
 
 // TODO: Replace with actual App Store URL when available
 const APP_STORE_URL = "#";
@@ -19,9 +20,9 @@ export function Hero() {
 
         <FadeIn delay={0.1}>
           <p className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground leading-relaxed">
-            SnapFound indexes your screenshots with on-device OCR. Search
-            receipts, Wi-Fi passwords, order confirmations, privately on your
-            iPhone.
+            SnapFound indexes your screenshots with on-device OCR, so you can
+            find receipts, Wi-Fi passwords, order confirmations, and more
+            without uploading your screenshots.
           </p>
         </FadeIn>
 
@@ -33,7 +34,7 @@ export function Hero() {
             </a>
             <a
               className={buttonVariants({ variant: "secondary", size: "lg" })}
-              href="#features"
+              href="#how-it-works"
             >
               See how it works
             </a>
@@ -53,9 +54,14 @@ export function Hero() {
         <div className="pointer-events-none absolute top-1/2 left-1/2 size-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/15 blur-3xl" />
         <PhoneMockup className="relative">
           <Image
-            alt="App screenshot"
+            alt="SnapFound screenshot search results on iPhone"
+            blurDataURL={deviceBlurDataURL}
             className="h-auto w-65 sm:w-75"
             height={2796}
+            placeholder="blur"
+            priority
+            quality={85}
+            sizes="(max-width: 640px) 260px, 300px"
             src="/assets/device-1.png"
             width={1419}
           />

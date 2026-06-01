@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ThemeSwitcher } from "@/components/common/theme-switcher";
 import { buttonVariants } from "@/components/ui/button";
+import { iconBlurDataURL } from "@/lib/image-placeholders";
 
 // TODO: Replace with actual App Store URL when available
 const APP_STORE_URL = "#";
@@ -17,9 +18,13 @@ export function Header() {
         >
           <Image
             alt="App icon"
+            blurDataURL={iconBlurDataURL}
             className="size-8"
             height={128}
-            src="/favicon-128x128.png"
+            placeholder="blur"
+            priority
+            quality={85}
+            src="/snapfound-icon-128x128.png"
             width={128}
           />
           SnapFound

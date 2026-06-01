@@ -5,15 +5,23 @@ import { Header } from "@/components/landing/header";
 import { buttonVariants } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Support — SnapFound",
+  title: "Support - SnapFound",
   description:
     "Get help with SnapFound, the private screenshot search app for iPhone.",
+  alternates: {
+    canonical: "https://snapfound.app/support",
+  },
+  openGraph: {
+    title: "Support - SnapFound",
+    description:
+      "Get help with SnapFound, the private screenshot search app for iPhone.",
+  },
 };
 
 const FAQS = [
   {
     q: "Why can't SnapFound find a screenshot I know I took?",
-    a: "Screenshots need to be indexed before they can be searched. Open the app and make sure indexing has completed. If you recently took the screenshot, give the app a moment to process it.",
+    a: "Screenshots need to be indexed before they can be searched. Open the app, start indexing, and wait for it to complete. If you recently took the screenshot, index it first and then search.",
   },
   {
     q: "How do I delete my SnapFound index?",
@@ -21,7 +29,7 @@ const FAQS = [
   },
   {
     q: "Does SnapFound upload my screenshots?",
-    a: "No. All processing happens on your iPhone. Screenshots, OCR text, and search queries never leave your device.",
+    a: "No. OCR, indexing, and search all happen on your iPhone. Your screenshots, OCR text, and search queries are not uploaded.",
   },
   {
     q: "How do I change which photos SnapFound can access?",
@@ -37,9 +45,24 @@ const FAQS = [
   },
 ];
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.map(({ q, a }) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: { "@type": "Answer", text: a },
+  })),
+};
+
 export default function SupportPage() {
   return (
     <>
+      <script
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted static JSON-LD
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        type="application/ld+json"
+      />
       <Header />
       <main className="mx-auto max-w-2xl px-6 py-16">
         {/* Back */}
@@ -54,7 +77,7 @@ export default function SupportPage() {
         <h1 className="font-bold text-3xl tracking-tight">Support</h1>
         <p className="mt-4 text-muted-foreground leading-relaxed">
           Need help with SnapFound? Check the common questions below or send an
-          email and we will get back to you.
+          email and I'll get back to you.
         </p>
 
         {/* Contact CTA */}
@@ -70,7 +93,7 @@ export default function SupportPage() {
           </div>
           <a
             className={buttonVariants({ size: "sm" })}
-            href="mailto:arnoldfederis@gmail.com"
+            href="mailto:support@snapfound.app"
           >
             Send email
           </a>

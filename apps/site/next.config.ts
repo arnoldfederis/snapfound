@@ -2,9 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["snapfound.dev", "*.snapfound.dev"],
-  /* config options here */
   output: "standalone",
   reactCompiler: true,
+  images: {
+    formats: ["image/webp"],
+    remotePatterns: [{ protocol: "https", hostname: "**.snapfound.app" }],
+  },
 };
 
 export default nextConfig;

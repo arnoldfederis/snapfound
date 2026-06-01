@@ -23,6 +23,7 @@ struct HomeView: View {
   @State private var searchPath = NavigationPath()
   @State private var showIndexingToast = false
   @State private var indexingToastCount = 0
+  @State private var indexingAuditMessage: String?
 
   private var zoomLevel: GridZoomLevel {
     GridZoomLevel(rawValue: zoomLevelRaw) ?? .comfortable
@@ -43,6 +44,27 @@ struct HomeView: View {
         }
       } label: {
         Image(systemName: "square.grid.3x2")
+      }
+    }
+  }
+
+  @ToolbarContentBuilder
+  private func libraryToolbar() -> some ToolbarContent {
+    gridSizeToolbar()
+
+    if #available(iOS 26.0, *) {
+      ToolbarSpacer(.fixed, placement: .topBarTrailing)
+    }
+
+    ToolbarItem(placement: .primaryAction) {
+      if viewModel.isSelectionMode {
+        Button {
+          viewModel.exitSelectionMode()
+        } label: {
+          Label("Cancel", systemImage: "xmark").labelStyle(.titleAndIcon)
+        }
+      } else {
+        Button("Select") { viewModel.enterSelectionMode() }
       }
     }
   }
@@ -87,25 +109,7 @@ struct HomeView: View {
               }
             )
           }
-          .toolbar {
-            if viewModel.isSelectionMode {
-              gridSizeToolbar()
-              ToolbarSpacer(.fixed, placement: .topBarTrailing)
-              ToolbarItem(placement: .primaryAction) {
-                Button {
-                  viewModel.exitSelectionMode()
-                } label: {
-                  Label("Cancel", systemImage: "xmark").labelStyle(.titleAndIcon)
-                }
-              }
-            } else {
-              gridSizeToolbar()
-              ToolbarSpacer(.fixed, placement: .topBarTrailing)
-              ToolbarItem(placement: .primaryAction) {
-                Button("Select") { viewModel.enterSelectionMode() }
-              }
-            }
-          }
+          .toolbar { libraryToolbar() }
           .animation(.snappy(duration: 0.2), value: viewModel.isSelectionMode)
         }
         .toolbar(
@@ -125,9 +129,12 @@ struct HomeView: View {
     .onChange(of: viewModel.searchText) { viewModel.search(in: records) }
     .onChange(of: viewModel.indexingState) { old, new in
       if case .completed(let count) = new, case .indexing = old {
-        indexingToastCount = count
+        indexingToastCount = viewModel.indexingRunSummary?.indexedCount ?? count
         withAnimation(.spring(duration: 0.4)) { showIndexingToast = true }
         Haptics.notification(.success)
+        if let summary = viewModel.indexingRunSummary, summary.hasSkips {
+          indexingAuditMessage = indexingAuditDescription(for: summary)
+        }
         Task {
           try? await Task.sleep(for: .seconds(3))
           withAnimation(.spring(duration: 0.4)) { showIndexingToast = false }
@@ -142,7 +149,11 @@ struct HomeView: View {
       }
     }
     .animation(.spring(duration: 0.4), value: showIndexingToast)
-    .sheet(isPresented: $viewModel.showPaywall) { PaywallView() }
+    .sheet(isPresented: $viewModel.showPaywall) {
+      PaywallView {
+        viewModel.startIndexing(modelContext: modelContext, isPro: purchaseManager.isPro)
+      }
+    }
     .sheet(isPresented: $viewModel.showShareSheet, onDismiss: viewModel.clearShareState) {
       ActivityShareSheet(items: viewModel.shareItems).presentationDetents([.medium, .large])
     }
@@ -150,6 +161,12 @@ struct HomeView: View {
       Button("OK", role: .cancel) { viewModel.shareErrorMessage = nil }
     } message: {
       Text(viewModel.shareErrorMessage ?? "The selected screenshots could not be loaded.")
+    }
+    .alert("Some Screenshots Weren't Indexed", isPresented: .constant(indexingAuditMessage != nil))
+    {
+      Button("OK", role: .cancel) { indexingAuditMessage = nil }
+    } message: {
+      Text(indexingAuditMessage ?? "")
     }
     .fullScreenCover(isPresented: $showOnboarding) {
       OnboardingView {
@@ -170,6 +187,25 @@ struct HomeView: View {
       }
     }
   }
+}
+
+private func indexingAuditDescription(for summary: IndexingRunSummary) -> String {
+  var parts: [String] = []
+
+  if summary.skippedCloudCount > 0 {
+    parts.append(
+      "\(summary.skippedCloudCount) screenshot\(summary.skippedCloudCount == 1 ? "" : "s") couldn't be downloaded from iCloud."
+    )
+  }
+
+  if summary.skippedOtherCount > 0 {
+    parts.append(
+      "\(summary.skippedOtherCount) screenshot\(summary.skippedOtherCount == 1 ? "" : "s") couldn't be indexed for another Photos error."
+    )
+  }
+
+  parts.append("Reconnect to the internet and run indexing again to retry skipped screenshots.")
+  return parts.joined(separator: " ")
 }
 
 private struct IndexingToastView: View {

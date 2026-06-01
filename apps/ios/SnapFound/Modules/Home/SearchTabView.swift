@@ -96,6 +96,7 @@ struct SearchTabView: View {
                     RecentlyOpenedCard(record: item.record, openedAt: item.openedAt, now: now)
                   }
                   .buttonStyle(.plain)
+                  .contentShape(Rectangle())
                   .simultaneousGesture(TapGesture().onEnded { Haptics.impact(.light) })
                 }
               }

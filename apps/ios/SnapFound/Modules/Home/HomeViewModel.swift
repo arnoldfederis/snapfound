@@ -8,6 +8,32 @@ struct RecentlyOpenedEntry: Codable {
   let openedAt: Date
 }
 
+enum RecentlyOpenedStore {
+  static let key = "recentlyOpenedV2"
+
+  static func load() -> [RecentlyOpenedEntry] {
+    guard let data = UserDefaults.standard.data(forKey: key),
+      let entries = try? JSONDecoder().decode([RecentlyOpenedEntry].self, from: data)
+    else { return [] }
+    return entries
+  }
+
+  static func save(_ entries: [RecentlyOpenedEntry]) {
+    if let data = try? JSONEncoder().encode(entries) {
+      UserDefaults.standard.set(data, forKey: key)
+    }
+  }
+
+  static func remove(assetIDs: Set<String>) {
+    let remainingEntries = load().filter { !assetIDs.contains($0.assetID) }
+    save(remainingEntries)
+  }
+
+  static func clear() {
+    UserDefaults.standard.removeObject(forKey: key)
+  }
+}
+
 @MainActor
 @Observable
 final class HomeViewModel {
@@ -18,18 +44,13 @@ final class HomeViewModel {
   // Selection mode
   var isSelectionMode = false
   var selectedIDs: Set<String> = []
-  var showDeleteSelected = false
   var isPreparingShare = false
   var showShareSheet = false
   var shareItems: [UIImage] = []
   var shareErrorMessage: String?
 
-  private static let recentlyOpenedKey = "recentlyOpenedV2"
   private(set) var recentlyOpened: [RecentlyOpenedEntry] = {
-    guard let data = UserDefaults.standard.data(forKey: "recentlyOpenedV2"),
-      let entries = try? JSONDecoder().decode([RecentlyOpenedEntry].self, from: data)
-    else { return [] }
-    return entries
+    RecentlyOpenedStore.load()
   }()
 
   private(set) var searchService = SearchService()
@@ -41,6 +62,10 @@ final class HomeViewModel {
 
   var indexingProgress: IndexingProgress {
     indexingService.progress
+  }
+
+  var indexingRunSummary: IndexingRunSummary? {
+    indexingService.lastRunSummary
   }
 
   var isSearchActive: Bool {
@@ -113,6 +138,8 @@ final class HomeViewModel {
     let toDelete = records.filter { deletedIDs.contains($0.assetID) }
     for record in toDelete { modelContext.delete(record) }
     try? modelContext.save()
+    RecentlyOpenedStore.remove(assetIDs: deletedIDs)
+    recentlyOpened.removeAll { deletedIDs.contains($0.assetID) }
     if isSearchActive {
       let remainingRecords = records.filter { !deletedIDs.contains($0.assetID) }
       search(in: remainingRecords)
@@ -176,14 +203,12 @@ final class HomeViewModel {
     var entries = recentlyOpened.filter { $0.assetID != assetID }
     entries.insert(RecentlyOpenedEntry(assetID: assetID, openedAt: Date()), at: 0)
     recentlyOpened = Array(entries.prefix(20))
-    if let data = try? JSONEncoder().encode(recentlyOpened) {
-      UserDefaults.standard.set(data, forKey: Self.recentlyOpenedKey)
-    }
+    RecentlyOpenedStore.save(recentlyOpened)
   }
 
   func clearRecentlyOpened() {
     recentlyOpened = []
-    UserDefaults.standard.removeObject(forKey: Self.recentlyOpenedKey)
+    RecentlyOpenedStore.clear()
     Haptics.notification(.success)
   }
 }

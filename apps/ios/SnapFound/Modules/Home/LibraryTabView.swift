@@ -10,6 +10,7 @@ struct HomeLibraryTabView: View {
   let openSettings: () -> Void
 
   @Environment(PurchaseManager.self) private var purchaseManager
+  @State private var showDeleteConfirmation = false
 
   var body: some View {
     mainGridView
@@ -33,7 +34,7 @@ struct HomeLibraryTabView: View {
             Spacer()
 
             Button {
-              viewModel.showDeleteSelected = true
+              showDeleteConfirmation = true
               Haptics.notification(.warning)
             } label: {
               Label("Delete", systemImage: "trash")
@@ -42,18 +43,18 @@ struct HomeLibraryTabView: View {
             .tint(.red)
             .confirmationDialog(
               "Delete \(viewModel.selectedIDs.count) Screenshots from Index?",
-              isPresented: Binding(
-                get: { viewModel.showDeleteSelected },
-                set: { viewModel.showDeleteSelected = $0 }
-              ),
+              isPresented: $showDeleteConfirmation,
               titleVisibility: .visible
             ) {
               Button("Delete \(viewModel.selectedIDs.count)", role: .destructive) {
-                viewModel.deleteSelected(modelContext: modelContext, records: records)
-                viewModel.showDeleteSelected = false
+                showDeleteConfirmation = false
+                Task { @MainActor in
+                  await Task.yield()
+                  viewModel.deleteSelected(modelContext: modelContext, records: records)
+                }
               }
               Button("Cancel", role: .cancel) {
-                viewModel.showDeleteSelected = false
+                showDeleteConfirmation = false
               }
             } message: {
               Text(
@@ -208,14 +209,14 @@ struct HomeLibraryTabView: View {
 
   private var noScreenshotsEmptyState: some View {
     ContentUnavailableView {
-      Label(noScreenshotsEmptyStateTitle, systemImage: "photo.on.rectangle.angled")
+      Label(noScreenshotsEmptyStateTitle, systemImage: "photo.on.rectangle.angled").tint(.accent)
     } description: {
       Text(noScreenshotsEmptyStateDescription)
     } actions: {
       Button("Open Settings") { openSettings() }
         .buttonStyle(.borderedProminent)
     }
-    .padding(.top, 40)
+    .frame(maxWidth: .infinity, minHeight: UIScreen.main.bounds.height * 0.6)
   }
 
   private var noScreenshotsEmptyStateTitle: String {

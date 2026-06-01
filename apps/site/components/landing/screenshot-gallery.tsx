@@ -1,18 +1,19 @@
-import Image from "next/image";
 import { FadeIn } from "@/components/common/motion";
+import { ProgressiveImage } from "@/components/common/progressive-image";
+import { deviceBlurDataURL } from "@/lib/image-placeholders";
 
 export function ScreenshotGallery() {
   return (
-    <section className="overflow-hidden py-24">
+    <section className="overflow-hidden border-y py-24">
       <div className="mx-auto max-w-6xl px-6">
         <FadeIn className="mx-auto mb-16 max-w-2xl text-center">
           <h2 className="font-bold text-4xl leading-[1.1] tracking-tight sm:text-5xl">
-            Every screenshot. Instantly searchable.
+            Make your screenshots instantly searchable.
           </h2>
           <p className="mt-5 text-lg text-muted-foreground leading-relaxed">
-            SnapFound reads the text in every screenshot you take and puts it
-            all at your fingertips. Search for anything you remember and find it
-            in seconds.
+            SnapFound reads text from your indexed screenshots and makes them
+            easy to find later. Search for a word, code, receipt, booking, or
+            note and get back to the right screenshot quickly.
           </p>
         </FadeIn>
 
@@ -26,21 +27,29 @@ export function ScreenshotGallery() {
 
           {/* Left */}
           <div className="relative translate-y-10 opacity-75">
-            <Image
-              alt="App screenshot"
+            <ProgressiveImage
+              alt="SnapFound screenshot detail view on iPhone"
+              blurDataURL={deviceBlurDataURL}
               className="h-auto w-44 sm:w-52"
               height={2796}
-              src="/assets/device-4.png"
+              placeholder="blur"
+              quality={85}
+              sizes="(max-width: 640px) 176px, 208px"
+              src="/assets/device-7.png"
               width={1419}
             />
           </div>
 
           {/* Center — most prominent */}
           <div className="relative z-10">
-            <Image
-              alt="App screenshot"
+            <ProgressiveImage
+              alt="SnapFound search results showing matched screenshots on iPhone"
+              blurDataURL={deviceBlurDataURL}
               className="h-auto w-56 sm:w-64"
               height={2796}
+              placeholder="blur"
+              quality={85}
+              sizes="(max-width: 640px) 224px, 256px"
               src="/assets/device-2.png"
               width={1419}
             />
@@ -48,11 +57,15 @@ export function ScreenshotGallery() {
 
           {/* Right */}
           <div className="relative translate-y-10 opacity-75">
-            <Image
-              alt="App screenshot"
+            <ProgressiveImage
+              alt="SnapFound multilingual search finding non-English screenshots on iPhone"
+              blurDataURL={deviceBlurDataURL}
               className="h-auto w-44 sm:w-52"
               height={2796}
-              src="/assets/device-3.png"
+              placeholder="blur"
+              quality={85}
+              sizes="(max-width: 640px) 176px, 208px"
+              src="/assets/device-8.png"
               width={1419}
             />
           </div>

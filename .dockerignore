@@ -1,0 +1,14 @@
+**/node_modules
+**/.turbo
+.git
+.github
+.claude
+.vscode
+tools
+prompts
+**/*.md
+**/dist
+**/.output
+.env
+.env.*
+.env.example

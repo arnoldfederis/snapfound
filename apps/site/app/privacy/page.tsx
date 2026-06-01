@@ -1,14 +1,20 @@
-// This page is a starting template and should be reviewed before launch.
-
 import { ArrowLeftIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { Footer } from "@/components/landing/footer";
 import { Header } from "@/components/landing/header";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — SnapFound",
+  title: "Privacy Policy - SnapFound",
   description:
     "SnapFound is designed for private screenshot search. Screenshots, OCR text, search queries, and metadata stay on your iPhone.",
+  alternates: {
+    canonical: "https://snapfound.app/privacy",
+  },
+  openGraph: {
+    title: "Privacy Policy - SnapFound",
+    description:
+      "SnapFound is designed for private screenshot search. Screenshots, OCR text, search queries, and metadata stay on your iPhone.",
+  },
 };
 
 const EFFECTIVE_DATE = "May 30, 2026";
@@ -193,8 +199,7 @@ export default function PrivacyPage() {
               >
                 snapfound.app/privacy
               </a>
-              . Continued use of the app after changes constitutes acceptance of
-              the updated policy.
+              . Please review the latest version when it changes.
             </p>
           </section>
 
@@ -205,9 +210,9 @@ export default function PrivacyPage() {
               Questions about this Privacy Policy? Reach out at{" "}
               <a
                 className="text-primary underline underline-offset-3 hover:text-primary/80"
-                href="mailto:arnoldfederis@gmail.com"
+                href="mailto:support@snapfound.app"
               >
-                arnoldfederis@gmail.com
+                support@snapfound.app
               </a>
               .
             </p>

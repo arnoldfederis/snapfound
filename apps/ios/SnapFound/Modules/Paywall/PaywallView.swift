@@ -5,7 +5,14 @@ struct PaywallView: View {
   @Environment(PurchaseManager.self) private var purchaseManager
   @Environment(\.dismiss) private var dismiss
 
+  let onIndexNow: (@MainActor () -> Void)?
+
   @State private var viewModel = PaywallViewModel()
+  @State private var showPurchaseConfirmation = false
+
+  init(onIndexNow: (@MainActor () -> Void)? = nil) {
+    self.onIndexNow = onIndexNow
+  }
 
   var body: some View {
     NavigationStack {
@@ -31,11 +38,19 @@ struct PaywallView: View {
     .onAppear {
       if purchaseManager.isPro { dismiss() }
     }
-    .onChange(of: purchaseManager.isPro) {
-      if purchaseManager.isPro {
+    .alert("Purchase Complete", isPresented: $showPurchaseConfirmation) {
+      Button("Index Now") {
         Haptics.notification(.success)
+        onIndexNow?()
         dismiss()
       }
+      .tint(.accentColor)
+
+      Button("Cancel", role: .cancel) {
+        dismiss()
+      }
+    } message: {
+      Text("SnapFound Pro is unlocked. Index your screenshots now?")
     }
   }
 
@@ -51,7 +66,7 @@ struct PaywallView: View {
       Text("SnapFound Pro")
         .font(.largeTitle.bold())
 
-      Text("Search every screenshot,\nnot just the first 50.")
+      Text("Search beyond the first 50 screenshots.")
         .font(.title3)
         .foregroundStyle(.secondary)
         .multilineTextAlignment(.center)
@@ -65,22 +80,22 @@ struct PaywallView: View {
       FeatureRow(
         icon: "photo.stack.fill",
         title: "Unlimited Screenshot Indexing",
-        subtitle: "Index your entire screenshot library - no cap"
+        subtitle: "Index all screenshots you allow SnapFound to access"
       )
       FeatureRow(
         icon: "lock.shield.fill",
         title: "Private On-Device OCR",
-        subtitle: "All processing stays on your device. No cloud."
+        subtitle: "Text recognition happens on your iPhone"
       )
       FeatureRow(
         icon: "magnifyingglass",
-        title: "Natural Language Search",
-        subtitle: "Find screenshots by what's in them"
+        title: "Fast Screenshot Search",
+        subtitle: "Find screenshots by the text inside them"
       )
       FeatureRow(
         icon: "arrow.triangle.2.circlepath",
         title: "One-Time Purchase",
-        subtitle: "Pay once, own forever. No subscription."
+        subtitle: "One-time unlock. No subscription."
       )
     }
   }
@@ -101,13 +116,17 @@ struct PaywallView: View {
 
       Button {
         Haptics.impact(.medium)
-        Task { await viewModel.purchase(using: purchaseManager) }
+        Task {
+          if await viewModel.purchase(using: purchaseManager) {
+            showPurchaseConfirmation = true
+          }
+        }
       } label: {
         HStack {
           if viewModel.isLoading {
             ProgressView().tint(.white)
           } else {
-            Text("Unlock Lifetime Access")
+            Text("Unlock Pro")
               .font(.body.weight(.semibold))
           }
         }
@@ -116,16 +135,22 @@ struct PaywallView: View {
         .background(.tint, in: RoundedRectangle(cornerRadius: 14))
         .foregroundStyle(.white)
       }
+      .tint(.accentColor)
       .disabled(viewModel.isLoading || purchaseManager.product == nil)
 
       Button {
         Haptics.selection()
-        Task { await viewModel.restore(using: purchaseManager) }
+        Task {
+          if await viewModel.restore(using: purchaseManager) {
+            Haptics.notification(.success)
+            dismiss()
+          }
+        }
       } label: {
         Text("Restore Purchase")
           .font(.subheadline)
-          .foregroundStyle(.secondary)
       }
+      .tint(.accentColor)
       .disabled(viewModel.isLoading)
 
       if let error = viewModel.errorMessage {
@@ -148,7 +173,7 @@ struct PaywallView: View {
         .font(.subheadline.weight(.medium))
         .foregroundStyle(.secondary)
       Text(
-        "Check your internet connection or try again later. Your purchase is safe - it's a one-time payment with no subscription."
+        "Check your internet connection or try again later. SnapFound Pro is a one-time purchase with no subscription."
       )
       .font(.caption)
       .foregroundStyle(.secondary)
@@ -163,7 +188,7 @@ struct PaywallView: View {
 
   private var privacyNote: some View {
     Label {
-      Text("SnapFound never uploads your screenshots. No accounts, no servers, no tracking.")
+      Text("SnapFound never uploads your screenshots. No account, no tracking, no cloud upload.")
         .font(.caption)
         .foregroundStyle(.secondary)
     } icon: {
