@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { ProgressiveImage } from "@/components/common/progressive-image";
 import { usePathname } from "next/navigation";
 import {
   GitHubIcon,
@@ -50,7 +50,7 @@ export function Footer() {
           className="flex items-center gap-2 font-bold text-sm tracking-tight"
           href="/"
         >
-          <Image
+          <ProgressiveImage
             alt="App icon"
             blurDataURL={iconBlurDataURL}
             className="size-6"

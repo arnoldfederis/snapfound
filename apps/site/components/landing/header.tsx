@@ -21,8 +21,9 @@ export function Header() {
             blurDataURL={iconBlurDataURL}
             className="size-8"
             height={128}
-            loading="eager"
             placeholder="blur"
+            priority
+            quality={85}
             src="/snapfound-icon-128x128.png"
             width={128}
           />
