@@ -200,14 +200,30 @@ final class IndexingService {
   }
 
   private nonisolated func makeThumbnail(from data: Data, maxDimension: CGFloat) async -> Data? {
+    // UIImage and preparingThumbnail are @MainActor in newer SDKs; calling them
+    // from Task.detached triggers unsafeForcedSync. Use ImageIO/CoreGraphics
+    // APIs instead — they are fully thread-safe and have no actor restriction.
     await Task.detached(priority: .utility) {
+      let options: [CFString: Any] = [
+        kCGImageSourceCreateThumbnailFromImageAlways: true,
+        kCGImageSourceThumbnailMaxPixelSize: maxDimension,
+        kCGImageSourceCreateThumbnailWithTransform: true,
+        kCGImageSourceShouldCacheImmediately: false,
+      ]
       guard
-        let image = UIImage(data: data),
-        let thumb = image.preparingThumbnail(of: CGSize(width: maxDimension, height: maxDimension))
-      else {
-        return nil
-      }
-      return thumb.jpegData(compressionQuality: 0.85)
+        let source = CGImageSourceCreateWithData(data as CFData, nil),
+        let thumbnail = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
+      else { return nil }
+
+      let dest = NSMutableData()
+      guard
+        let destination = CGImageDestinationCreateWithData(dest, "public.jpeg" as CFString, 1, nil)
+      else { return nil }
+      CGImageDestinationAddImage(
+        destination, thumbnail,
+        [kCGImageDestinationLossyCompressionQuality: 0.85] as CFDictionary
+      )
+      return CGImageDestinationFinalize(destination) ? dest as Data : nil
     }.value
   }
 }

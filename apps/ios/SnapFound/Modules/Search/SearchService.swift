@@ -86,7 +86,15 @@ final class SearchService {
     let tokens =
       normalised
       .components(separatedBy: CharacterSet.alphanumerics.inverted)
-      .filter { !$0.isEmpty && $0.count > 1 && !stopWords.contains($0) }
+      .filter { token in
+        guard !token.isEmpty, !stopWords.contains(token) else { return false }
+        // Non-ASCII scripts (CJK, Arabic, Devanagari, …) use single characters
+        // as complete words, so bypass the length-2 guard for them.
+        if token.count == 1 {
+          return token.unicodeScalars.first.map { $0.value > 127 } ?? false
+        }
+        return true
+      }
 
     var expanded = Set(tokens)
     for token in tokens {

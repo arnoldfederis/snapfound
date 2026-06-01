@@ -12,6 +12,7 @@ const SHOWCASES = [
     phoneFirst: false,
     muted: false,
     src: "/assets/device-2.png",
+    alt: "SnapFound full-text search finding a screenshot on iPhone",
   },
   {
     id: "privacy",
@@ -21,15 +22,27 @@ const SHOWCASES = [
     phoneFirst: true,
     muted: true,
     src: "/assets/device-3.png",
+    alt: "SnapFound on-device OCR processing screenshots privately on iPhone",
+  },
+  {
+    id: "multi-language",
+    eyebrow: "Multilingual search",
+    headline: "Find text across languages.",
+    body: "SnapFound automatically detects and indexes text from supported languages like English, Spanish, French, Japanese, Korean, Chinese, Thai, and more, privately on your iPhone.",
+    phoneFirst: false,
+    muted: false,
+    src: "/assets/device-8.png",
+    alt: "SnapFound multilingual OCR searching non-English screenshots on iPhone",
   },
   {
     id: "screenshots",
     eyebrow: "Your screenshot library",
     headline: "Every screenshot, beautifully organized.",
     body: "Browse all your screenshots in a clean date-grouped grid. Switch between 2, 3, or 4 columns to suit how you browse.",
-    phoneFirst: false,
-    muted: false,
+    phoneFirst: true,
+    muted: true,
     src: "/assets/device-4.png",
+    alt: "SnapFound screenshot library grid view organized by date on iPhone",
   },
 ];
 
@@ -67,7 +80,7 @@ export function FeatureShowcase() {
                   <div className="pointer-events-none absolute top-1/2 left-1/2 size-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl" />
                   <PhoneMockup className="relative">
                     <Image
-                      alt="App screenshot"
+                      alt={s.alt}
                       blurDataURL={deviceBlurDataURL}
                       className="h-auto w-65 sm:w-75"
                       height={2796}

@@ -11,6 +11,7 @@ struct SettingsView: View {
   @State private var viewModel = SettingsViewModel()
   @State private var showPaywall = false
   @State private var showIndexingInProgressAlert = false
+  @State private var rebuildIconAngle: Double = 0
 
   var body: some View {
     NavigationStack {
@@ -20,6 +21,7 @@ struct SettingsView: View {
         proSection
         aboutSection
       }
+      .animation(.spring(response: 0.35), value: records.isEmpty)
       .navigationTitle("Settings")
       .alert("Delete all indexed data?", isPresented: $viewModel.showDeleteConfirmation) {
         Button("Delete Index", role: .destructive) {
@@ -116,11 +118,20 @@ struct SettingsView: View {
       if !records.isEmpty {
         Button {
           Haptics.impact(.medium)
+          withAnimation(.easeInOut(duration: 0.45)) {
+            rebuildIconAngle += 360
+          }
           viewModel.showRebuildConfirmation = true
         } label: {
-          Label("Rebuild Full Index", systemImage: "arrow.2.circlepath")
+          Label {
+            Text("Rebuild Full Index")
+          } icon: {
+            Image(systemName: "arrow.2.circlepath")
+              .rotationEffect(.degrees(rebuildIconAngle))
+          }
         }
         .tint(.accentColor)
+        .transition(.opacity.combined(with: .scale(scale: 0.95)))
       }
 
       Button(role: .destructive) {

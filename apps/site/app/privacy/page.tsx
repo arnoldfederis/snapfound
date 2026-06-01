@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: "Privacy Policy - SnapFound",
   description:
     "SnapFound is designed for private screenshot search. Screenshots, OCR text, search queries, and metadata stay on your iPhone.",
+  alternates: {
+    canonical: "https://snapfound.app/privacy",
+  },
   openGraph: {
     title: "Privacy Policy - SnapFound",
     description:

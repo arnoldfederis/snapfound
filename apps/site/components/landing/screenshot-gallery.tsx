@@ -4,7 +4,7 @@ import { deviceBlurDataURL } from "@/lib/image-placeholders";
 
 export function ScreenshotGallery() {
   return (
-    <section className="overflow-hidden border-y bg-muted/40 py-24">
+    <section className="overflow-hidden border-y py-24">
       <div className="mx-auto max-w-6xl px-6">
         <FadeIn className="mx-auto mb-16 max-w-2xl text-center">
           <h2 className="font-bold text-4xl leading-[1.1] tracking-tight sm:text-5xl">
@@ -59,7 +59,7 @@ export function ScreenshotGallery() {
               className="h-auto w-44 sm:w-52"
               height={2796}
               placeholder="blur"
-              src="/assets/device-5.png"
+              src="/assets/device-8.png"
               width={1419}
             />
           </div>

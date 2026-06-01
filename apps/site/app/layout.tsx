@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   applicationName: "SnapFound",
   keywords: [
     "screenshot search",
+    "search screenshots",
+    "find text in screenshots",
+    "iPhone screenshot search",
+    "OCR screenshot app",
+    "screenshot text recognition",
     "iPhone screenshots",
     "OCR",
     "private search",

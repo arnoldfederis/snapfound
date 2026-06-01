@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Support - SnapFound",
   description:
     "Get help with SnapFound, the private screenshot search app for iPhone.",
+  alternates: {
+    canonical: "https://snapfound.app/support",
+  },
   openGraph: {
     title: "Support - SnapFound",
     description:
