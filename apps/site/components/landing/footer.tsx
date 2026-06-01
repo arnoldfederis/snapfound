@@ -2,8 +2,37 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import {
+  GitHubIcon,
+  LinkedInIcon,
+  ThreadsIcon,
+  XIcon,
+} from "@/components/common/social-icons";
 import { iconBlurDataURL } from "@/lib/image-placeholders";
 import { cn } from "@/lib/utils";
+
+const SOCIAL_LINKS = [
+  {
+    href: "https://x.com/arnoldfederis",
+    label: "Follow Arnolfo Federis on X",
+    Icon: XIcon,
+  },
+  {
+    href: "https://linkedin.com/in/arnoldfederis",
+    label: "Connect with Arnolfo Federis on LinkedIn",
+    Icon: LinkedInIcon,
+  },
+  {
+    href: "https://github.com/arnoldfederis",
+    label: "View Arnolfo Federis on GitHub",
+    Icon: GitHubIcon,
+  },
+  {
+    href: "https://threads.com/arnoldfederis",
+    label: "Follow Arnolfo Federis on Threads",
+    Icon: ThreadsIcon,
+  },
+] as const;
 
 const LINKS = [
   { label: "Privacy", href: "/privacy" },
@@ -50,9 +79,25 @@ export function Footer() {
           ))}
         </nav>
 
-        <p className="text-muted-foreground text-xs">
-          © {new Date().getFullYear()} SnapFound
-        </p>
+        <div className="flex flex-col items-center gap-2 sm:items-end">
+          <p className="text-muted-foreground text-xs">
+            © {new Date().getFullYear()} SnapFound
+          </p>
+          <div className="flex items-center gap-3">
+            {SOCIAL_LINKS.map(({ href, label, Icon }) => (
+              <a
+                aria-label={label}
+                className="text-muted-foreground transition-colors hover:text-primary"
+                href={href}
+                key={href}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <Icon className="size-4" />
+              </a>
+            ))}
+          </div>
+        </div>
       </div>
     </footer>
   );

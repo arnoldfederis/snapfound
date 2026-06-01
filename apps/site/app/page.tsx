@@ -12,28 +12,6 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "WebSite",
-      "@id": `${BASE}/#website`,
-      url: BASE,
-      name: "SnapFound",
-      description: "Private screenshot search for iPhone using on-device OCR.",
-    },
-    {
-      "@type": "Organization",
-      "@id": `${BASE}/#organization`,
-      name: "SnapFound",
-      url: BASE,
-      logo: {
-        "@type": "ImageObject",
-        url: `${BASE}/snapfound-icon-512x512.png`,
-      },
-      contactPoint: {
-        "@type": "ContactPoint",
-        email: "support@snapfound.app",
-        contactType: "customer support",
-      },
-    },
-    {
       "@type": "SoftwareApplication",
       name: "SnapFound",
       operatingSystem: "iOS",
@@ -41,6 +19,7 @@ const jsonLd = {
       description:
         "Search your screenshots instantly using on-device OCR. Find receipts, Wi-Fi passwords, order confirmations, and more — privately, with no account required.",
       url: BASE,
+      creator: { "@id": "https://snapfound.app/#founder" },
       offers: {
         "@type": "Offer",
         price: "0",

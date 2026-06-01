@@ -45,9 +45,24 @@ const FAQS = [
   },
 ];
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.map(({ q, a }) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: { "@type": "Answer", text: a },
+  })),
+};
+
 export default function SupportPage() {
   return (
     <>
+      <script
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted static JSON-LD
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        type="application/ld+json"
+      />
       <Header />
       <main className="mx-auto max-w-2xl px-6 py-16">
         {/* Back */}
