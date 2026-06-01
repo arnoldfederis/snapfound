@@ -1,5 +1,3 @@
-// This page is a starting template and should be reviewed before launch.
-
 import { ArrowLeftIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { Footer } from "@/components/landing/footer";
