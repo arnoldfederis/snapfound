@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { FadeIn } from "@/components/common/motion";
+import { ProgressiveImage } from "@/components/common/progressive-image";
 import { deviceBlurDataURL } from "@/lib/image-placeholders";
 
 export function ScreenshotGallery() {
@@ -27,12 +27,14 @@ export function ScreenshotGallery() {
 
           {/* Left */}
           <div className="relative translate-y-10 opacity-75">
-            <Image
-              alt="App screenshot"
+            <ProgressiveImage
+              alt="SnapFound screenshot detail view on iPhone"
               blurDataURL={deviceBlurDataURL}
               className="h-auto w-44 sm:w-52"
               height={2796}
               placeholder="blur"
+              quality={85}
+              sizes="(max-width: 640px) 176px, 208px"
               src="/assets/device-7.png"
               width={1419}
             />
@@ -40,12 +42,14 @@ export function ScreenshotGallery() {
 
           {/* Center — most prominent */}
           <div className="relative z-10">
-            <Image
-              alt="App screenshot"
+            <ProgressiveImage
+              alt="SnapFound search results showing matched screenshots on iPhone"
               blurDataURL={deviceBlurDataURL}
               className="h-auto w-56 sm:w-64"
               height={2796}
               placeholder="blur"
+              quality={85}
+              sizes="(max-width: 640px) 224px, 256px"
               src="/assets/device-2.png"
               width={1419}
             />
@@ -53,12 +57,14 @@ export function ScreenshotGallery() {
 
           {/* Right */}
           <div className="relative translate-y-10 opacity-75">
-            <Image
-              alt="App screenshot"
+            <ProgressiveImage
+              alt="SnapFound multilingual search finding non-English screenshots on iPhone"
               blurDataURL={deviceBlurDataURL}
               className="h-auto w-44 sm:w-52"
               height={2796}
               placeholder="blur"
+              quality={85}
+              sizes="(max-width: 640px) 176px, 208px"
               src="/assets/device-8.png"
               width={1419}
             />

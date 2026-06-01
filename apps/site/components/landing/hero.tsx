@@ -58,8 +58,10 @@ export function Hero() {
             blurDataURL={deviceBlurDataURL}
             className="h-auto w-65 sm:w-75"
             height={2796}
-            loading="eager"
             placeholder="blur"
+            priority
+            quality={85}
+            sizes="(max-width: 640px) 260px, 300px"
             src="/assets/device-1.png"
             width={1419}
           />
