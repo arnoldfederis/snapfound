@@ -27,6 +27,8 @@ ENV HOSTNAME=0.0.0.0
 COPY --from=build /app/apps/site/.next/standalone ./
 COPY --from=build /app/apps/site/.next/static ./apps/site/.next/static
 COPY --from=build /app/apps/site/public ./apps/site/public
+COPY --from=deps /app/node_modules/sharp ./node_modules/sharp
+COPY --from=deps /app/node_modules/@img ./node_modules/@img
 
 EXPOSE 4000
 CMD ["bun", "apps/site/server.js"]
