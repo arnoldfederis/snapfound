@@ -1,4 +1,5 @@
 import Foundation
+import Photos
 import SwiftData
 internal import UIKit
 
@@ -11,6 +12,15 @@ final class SettingsViewModel {
   private let indexingService = IndexingService.shared
 
   var indexingState: IndexingState { indexingService.state }
+
+  var isLimitedPhotoAccess: Bool {
+    PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited
+  }
+
+  var isPhotoAccessDenied: Bool {
+    let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+    return status == .denied || status == .restricted
+  }
 
   func deleteIndex(modelContext: ModelContext) {
     indexingService.deleteIndex(modelContext: modelContext)

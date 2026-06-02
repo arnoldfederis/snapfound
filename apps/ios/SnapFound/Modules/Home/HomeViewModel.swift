@@ -80,6 +80,11 @@ final class HomeViewModel {
     PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited
   }
 
+  var isPhotoAccessDenied: Bool {
+    let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+    return status == .denied || status == .restricted
+  }
+
   func onAppear(
     modelContext: ModelContext,
     records: [ScreenshotRecord],

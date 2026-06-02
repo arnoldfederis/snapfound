@@ -81,16 +81,23 @@ struct HomeLibraryTabView: View {
     ScrollViewReader { proxy in
       ScrollView {
         VStack {
+          Group {
+            indexingStatusBanner
+            limitedAccessBanner
+            freeLimitBanner
+          }
+          .padding(.horizontal, 16)
+
           if records.isEmpty {
             noScreenshotsEmptyState
           } else if zoomLevel.isGrouped {
             groupedGridView
           } else {
             flatGrid(items: records.map { CellItem(record: $0, terms: []) })
+              .padding(.horizontal, zoomLevel == .compact ? 6 : 16)
           }
         }
         .id("grid-top")
-        .padding(.horizontal, zoomLevel == .compact ? 6 : 16)
       }
       .onAppear {
         if let id = viewModel.lastViewedAssetID {
@@ -258,12 +265,16 @@ struct HomeLibraryTabView: View {
       )
     case .paused(let reason):
       StatusBanner(icon: "pause.circle", title: LocalizedStringKey(reason), color: .orange)
-    case .idle where records.isEmpty:
-      StatusBanner(
-        icon: "photo.stack",
-        title: "Open Settings to index your screenshots",
-        color: .accent
-      )
+    case .idle:
+      if viewModel.isPhotoAccessDenied {
+        PermissionDeniedBanner()
+      } else if records.isEmpty {
+        StatusBanner(
+          icon: "photo.stack",
+          title: "Open Settings to index your screenshots",
+          color: .accent
+        )
+      }
     case .freeLimitReached:
       EmptyView()
     default:
@@ -273,7 +284,7 @@ struct HomeLibraryTabView: View {
 
   @ViewBuilder
   private var limitedAccessBanner: some View {
-    if viewModel.isLimitedPhotoAccess, case .completed = viewModel.indexingState {
+    if viewModel.isLimitedPhotoAccess {
       LimitedAccessBanner()
     }
   }
@@ -335,6 +346,10 @@ struct IndexingProgressBanner: View {
       }
       ProgressView(value: progress.fraction)
         .tint(.accent)
+      Text("Your device may feel slower while indexing. This is normal and temporary.")
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     .padding(12)
     .background(.accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
@@ -342,6 +357,8 @@ struct IndexingProgressBanner: View {
 }
 
 struct PermissionDeniedBanner: View {
+  var showAction: Bool = true
+
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       Label("Photos Access Denied", systemImage: "exclamationmark.lock.fill")
@@ -349,30 +366,35 @@ struct PermissionDeniedBanner: View {
         .foregroundStyle(.orange)
 
       Text(
-        "SnapFound needs Photos access to index screenshots. All processing stays on your device and nothing is uploaded."
+        "SnapFound needs Photos access to index your screenshots. All processing stays on your device and nothing is uploaded."
       )
       .font(.caption)
       .foregroundStyle(.secondary)
 
-      Button {
-        if let url = URL(string: UIApplication.openSettingsURLString) {
-          UIApplication.shared.open(url)
+      if showAction {
+        Button {
+          if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
+          }
+        } label: {
+          Label("Open Settings", systemImage: "gear")
+            .font(.subheadline.weight(.medium))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+            .foregroundStyle(.orange)
         }
-      } label: {
-        Label("Open Settings", systemImage: "gear")
-          .font(.subheadline.weight(.medium))
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, 10)
-          .background(.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
-          .foregroundStyle(.orange)
       }
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
     .padding(12)
     .background(.orange.opacity(0.18), in: RoundedRectangle(cornerRadius: 12))
   }
 }
 
 struct LimitedAccessBanner: View {
+  var showAction: Bool = true
+
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       Label("Limited Photos Access", systemImage: "photo.badge.checkmark")
@@ -385,19 +407,22 @@ struct LimitedAccessBanner: View {
       .font(.caption)
       .foregroundStyle(.secondary)
 
-      Button {
-        if let url = URL(string: UIApplication.openSettingsURLString) {
-          UIApplication.shared.open(url)
+      if showAction {
+        Button {
+          if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
+          }
+        } label: {
+          Label("Allow More in Settings", systemImage: "gear")
+            .font(.subheadline.weight(.medium))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(.yellow.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+            .foregroundStyle(.yellow)
         }
-      } label: {
-        Label("Allow More in Settings", systemImage: "gear")
-          .font(.subheadline.weight(.medium))
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, 10)
-          .background(.yellow.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
-          .foregroundStyle(.yellow)
       }
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
     .padding(12)
     .background(.yellow.opacity(0.18), in: RoundedRectangle(cornerRadius: 12))
   }

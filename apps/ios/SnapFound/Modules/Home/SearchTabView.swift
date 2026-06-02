@@ -153,12 +153,16 @@ struct SearchTabView: View {
       )
     case .paused(let reason):
       StatusBanner(icon: "pause.circle", title: LocalizedStringKey(reason), color: .orange)
-    case .idle where records.isEmpty:
-      StatusBanner(
-        icon: "photo.stack",
-        title: "Open Settings to index your screenshots",
-        color: .accent
-      )
+    case .idle:
+      if viewModel.isPhotoAccessDenied {
+        PermissionDeniedBanner()
+      } else if records.isEmpty {
+        StatusBanner(
+          icon: "photo.stack",
+          title: "Open Settings to index your screenshots",
+          color: .accent
+        )
+      }
     case .freeLimitReached:
       EmptyView()
     default:
@@ -168,7 +172,7 @@ struct SearchTabView: View {
 
   @ViewBuilder
   private var limitedAccessBanner: some View {
-    if viewModel.isLimitedPhotoAccess, case .completed = viewModel.indexingState {
+    if viewModel.isLimitedPhotoAccess {
       LimitedAccessBanner()
     }
   }

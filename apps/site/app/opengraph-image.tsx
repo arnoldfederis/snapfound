@@ -13,9 +13,18 @@ const DEVICE_W = 280;
 const DEVICE_H = 552;
 
 export default async function Image() {
-  const [iconBuffer, deviceBuffer] = await Promise.all([
+  const [
+    iconBuffer,
+    deviceBuffer,
+    inter400Buffer,
+    inter600Buffer,
+    inter700Buffer,
+  ] = await Promise.all([
     readFile(join(process.cwd(), "public", "snapfound-icon-512x512.png")),
     readFile(join(process.cwd(), "public", "assets", "device-1.png")),
+    readFile(join(process.cwd(), "public", "fonts", "inter-400.ttf")),
+    readFile(join(process.cwd(), "public", "fonts", "inter-600.ttf")),
+    readFile(join(process.cwd(), "public", "fonts", "inter-700.ttf")),
   ]);
   const iconSrc = `data:image/png;base64,${iconBuffer.toString("base64")}`;
   const deviceSrc = `data:image/png;base64,${deviceBuffer.toString("base64")}`;
@@ -27,7 +36,7 @@ export default async function Image() {
         height: 630,
         display: "flex",
         background: BG,
-        fontFamily: "sans-serif",
+        fontFamily: "Inter",
         position: "relative",
       }}
     >
@@ -122,17 +131,36 @@ export default async function Image() {
             color: "rgba(255,255,255,0.48)",
             fontSize: 22,
             lineHeight: 1.4,
-            marginBottom: 46,
+            marginBottom: 32,
             fontWeight: 400,
           }}
         >
           Private screenshot search for iPhone.
         </div>
 
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            alignSelf: "flex-start",
+            minHeight: 52,
+            padding: "0 22px",
+            marginBottom: 34,
+            borderRadius: 999,
+            background: ACCENT,
+            color: "white",
+            fontSize: 18,
+            fontWeight: 700,
+          }}
+        >
+          Get SnapFound on iPhone
+        </div>
+
         {/* Badges */}
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           {[
-            "10+ languages",
+            "OCR in 10+ languages",
             "No account",
             "No tracking",
             "No cloud upload",
@@ -205,6 +233,13 @@ export default async function Image() {
         snapfound.app
       </div>
     </div>,
-    { ...size },
+    {
+      ...size,
+      fonts: [
+        { name: "Inter", data: inter400Buffer, weight: 400, style: "normal" },
+        { name: "Inter", data: inter600Buffer, weight: 600, style: "normal" },
+        { name: "Inter", data: inter700Buffer, weight: 700, style: "normal" },
+      ],
+    },
   );
 }

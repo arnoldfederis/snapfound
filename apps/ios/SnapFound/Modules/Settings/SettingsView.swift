@@ -12,6 +12,7 @@ struct SettingsView: View {
   @State private var showPaywall = false
   @State private var showIndexingInProgressAlert = false
   @State private var rebuildIconAngle: Double = 0
+  @State private var showUpToDateToast = false
 
   var body: some View {
     NavigationStack {
@@ -53,6 +54,37 @@ struct SettingsView: View {
           dismiss()
         }
       }
+      .onChange(of: viewModel.indexingState) { old, new in
+        switch new {
+        case .indexing:
+          dismiss()
+        case .completed:
+          if case .requestingPermission = old {
+            Haptics.notification(.success)
+            withAnimation(.spring(duration: 0.4)) { showUpToDateToast = true }
+            Task {
+              try? await Task.sleep(for: .seconds(3))
+              withAnimation(.spring(duration: 0.4)) { showUpToDateToast = false }
+            }
+          }
+        default:
+          break
+        }
+      }
+      .overlay(alignment: .bottom) {
+        if showUpToDateToast {
+          Label("Already up to date", systemImage: "checkmark.circle.fill")
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 12)
+            .background(.green, in: Capsule())
+            .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+            .padding(.bottom, 16)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+      }
+      .animation(.spring(duration: 0.4), value: showUpToDateToast)
     }
   }
 
@@ -83,15 +115,55 @@ struct SettingsView: View {
     }
   }
 
+  // MARK: - Status Banners Section
+
+  @ViewBuilder
+  private var statusBannersSection: some View {
+    let isIndexing: Bool = {
+      if case .indexing = viewModel.indexingState { return true }
+      return false
+    }()
+    let hasBanners = isIndexing || viewModel.isPhotoAccessDenied || viewModel.isLimitedPhotoAccess
+
+    if hasBanners {
+      VStack(spacing: 8) {
+        if case .indexing(let prog) = viewModel.indexingState {
+          IndexingProgressBanner(progress: prog)
+        }
+        if viewModel.isPhotoAccessDenied {
+          PermissionDeniedBanner(showAction: false)
+        }
+        if viewModel.isLimitedPhotoAccess {
+          LimitedAccessBanner(showAction: false)
+        }
+      }
+      .frame(maxWidth: .infinity)
+      .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 0, trailing: 16))
+      .listRowSeparator(.hidden)
+    }
+  }
+
   // MARK: - Index Section
 
   private var indexSection: some View {
-    Section("Index") {
-      LabeledContent("Screenshots indexed", value: "\(records.count)")
-      LabeledContent("Free limit", value: "\(IndexingService.freeIndexLimit) screenshots")
+    let isIndexing: Bool = {
+      if case .indexing = viewModel.indexingState { return true }
+      return false
+    }()
+
+    return Section("Index") {
+      statusBannersSection
+      
+      if !isIndexing {
+        LabeledContent("Screenshots indexed", value: "\(records.count)")
+      }
+      
+      if !purchaseManager.isPro {
+        LabeledContent("Free limit", value: "\(IndexingService.freeIndexLimit) screenshots")
+      }
 
       Button {
-        if case .indexing = viewModel.indexingState {
+        if isIndexing {
           Haptics.notification(.warning)
           showIndexingInProgressAlert = true
         } else if !purchaseManager.isPro && records.count >= IndexingService.freeIndexLimit {
@@ -100,7 +172,6 @@ struct SettingsView: View {
         } else {
           Haptics.impact(.medium)
           viewModel.indexNew(modelContext: modelContext, isPro: purchaseManager.isPro)
-          dismiss()
         }
       } label: {
         Label("Index New Screenshots", systemImage: "arrow.clockwise")
@@ -115,7 +186,7 @@ struct SettingsView: View {
       }
       .tint(.accentColor)
 
-      if !records.isEmpty {
+      if !records.isEmpty && !isIndexing {
         Button {
           Haptics.impact(.medium)
           withAnimation(.easeInOut(duration: 0.45)) {
@@ -132,14 +203,14 @@ struct SettingsView: View {
         }
         .tint(.accentColor)
         .transition(.opacity.combined(with: .scale(scale: 0.95)))
-      }
 
-      Button(role: .destructive) {
-        Haptics.notification(.warning)
-        viewModel.showDeleteConfirmation = true
-      } label: {
-        Label("Delete Index", systemImage: "trash")
-          .foregroundStyle(.red)
+        Button(role: .destructive) {
+          Haptics.notification(.warning)
+          viewModel.showDeleteConfirmation = true
+        } label: {
+          Label("Delete Index", systemImage: "trash")
+            .foregroundStyle(.red)
+        }
       }
     }
   }

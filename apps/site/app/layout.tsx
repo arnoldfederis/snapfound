@@ -31,7 +31,7 @@ const siteJsonLd = {
       "@id": `${BASE}/#founder`,
       name: "Arnolfo Federis",
       alternateName: "Arnold Federis",
-      url: "https://github.com/arnoldfederis",
+      url: "https://arnoldfederis.com",
       sameAs: FOUNDER_SAME_AS,
     },
     {
@@ -89,9 +89,9 @@ export const metadata: Metadata = {
     canonical: "https://snapfound.app",
   },
   openGraph: {
-    title: "SnapFound - Search Your iPhone Screenshots Instantly",
+    title: "SnapFound - Private screenshot search for iPhone",
     description:
-      "SnapFound uses on-device OCR to index your screenshots so you can find receipts, Wi-Fi passwords, booking references, and more — privately on your iPhone, no account required.",
+      "Find any screenshot instantly. SnapFound indexes your screenshots locally with on-device OCR, so your private information stays on your iPhone.",
     url: "https://snapfound.app",
     siteName: "SnapFound",
     type: "website",
@@ -107,9 +107,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "SnapFound - Search Your iPhone Screenshots Instantly",
+    title: "SnapFound - Private screenshot search for iPhone",
     description:
-      "SnapFound uses on-device OCR to index your screenshots so you can find receipts, Wi-Fi passwords, booking references, and more — privately on your iPhone, no account required.",
+      "Find any screenshot instantly. SnapFound indexes your screenshots locally with on-device OCR, so your private information stays on your iPhone.",
     images: ["/opengraph-image"],
   },
   icons: {
