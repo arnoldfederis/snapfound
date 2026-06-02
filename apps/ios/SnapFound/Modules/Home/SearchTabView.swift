@@ -1,5 +1,13 @@
 import SwiftUI
 
+struct RecentlyOpenedNavigation: Hashable {
+  let record: ScreenshotRecord
+  let list: [ScreenshotRecord]
+
+  static func == (lhs: Self, rhs: Self) -> Bool { lhs.record.assetID == rhs.record.assetID }
+  func hash(into hasher: inout Hasher) { hasher.combine(record.assetID) }
+}
+
 struct SearchTabView: View {
   let records: [ScreenshotRecord]
   let viewModel: HomeViewModel
@@ -92,7 +100,10 @@ struct SearchTabView: View {
             ScrollView(.horizontal) {
               LazyHStack(spacing: 12) {
                 ForEach(recentlyOpenedRecords, id: \.record.assetID) { item in
-                  NavigationLink(value: item.record) {
+                  NavigationLink(value: RecentlyOpenedNavigation(
+                    record: item.record,
+                    list: recentlyOpenedRecords.map(\.record)
+                  )) {
                     RecentlyOpenedCard(record: item.record, openedAt: item.openedAt, now: now)
                   }
                   .buttonStyle(.plain)

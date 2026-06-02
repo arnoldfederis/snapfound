@@ -83,6 +83,15 @@ struct HomeView: View {
                 }
               )
             }
+            .navigationDestination(for: RecentlyOpenedNavigation.self) { nav in
+              DetailView(
+                record: nav.record, allRecords: nav.list,
+                onPageChanged: {
+                  viewModel.lastViewedAssetID = $0
+                  viewModel.addRecentlyOpened($0)
+                }
+              )
+            }
         }
         .toolbar(
           searchPath.isEmpty || !hidesTabBarDuringDetailNavigation ? .visible : .hidden,
