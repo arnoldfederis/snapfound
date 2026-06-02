@@ -153,11 +153,11 @@ struct SettingsView: View {
 
     return Section("Index") {
       statusBannersSection
-      
+
       if !isIndexing {
         LabeledContent("Screenshots indexed", value: "\(records.count)")
       }
-      
+
       if !purchaseManager.isPro {
         LabeledContent("Free limit", value: "\(IndexingService.freeIndexLimit) screenshots")
       }

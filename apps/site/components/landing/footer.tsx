@@ -1,7 +1,7 @@
 "use client";
 
-import { ProgressiveImage } from "@/components/common/progressive-image";
 import { usePathname } from "next/navigation";
+import { ProgressiveImage } from "@/components/common/progressive-image";
 import {
   GitHubIcon,
   LinkedInIcon,
