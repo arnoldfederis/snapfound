@@ -10,7 +10,6 @@ struct SettingsView: View {
 
   @State private var viewModel = SettingsViewModel()
   @State private var showPaywall = false
-  @State private var showIndexingInProgressAlert = false
   @State private var rebuildIconAngle: Double = 0
   @State private var showUpToDateToast = false
 
@@ -42,11 +41,6 @@ struct SettingsView: View {
         Text(
           "All existing index data will be deleted and rebuilt from scratch. This may take a few minutes."
         )
-      }
-      .alert("Indexing Already Running", isPresented: $showIndexingInProgressAlert) {
-        Button("OK", role: .cancel) {}
-      } message: {
-        Text("SnapFound is already indexing your screenshots. Please wait for it to finish.")
       }
       .sheet(isPresented: $showPaywall) {
         PaywallView {
@@ -151,6 +145,8 @@ struct SettingsView: View {
       return false
     }()
 
+    let isDisabled = records.isEmpty || isIndexing
+
     return Section("Index") {
       statusBannersSection
 
@@ -163,10 +159,7 @@ struct SettingsView: View {
       }
 
       Button {
-        if isIndexing {
-          Haptics.notification(.warning)
-          showIndexingInProgressAlert = true
-        } else if !purchaseManager.isPro && records.count >= IndexingService.freeIndexLimit {
+        if !purchaseManager.isPro && records.count >= IndexingService.freeIndexLimit {
           Haptics.impact(.light)
           showPaywall = true
         } else {
@@ -174,44 +167,43 @@ struct SettingsView: View {
           viewModel.indexNew(modelContext: modelContext, isPro: purchaseManager.isPro)
         }
       } label: {
-        Label("Index New Screenshots", systemImage: "arrow.clockwise")
+        Label(
+          isIndexing ? "Indexing screenshots…" : "Index New Screenshots",
+          systemImage: "arrow.clockwise"
+        )
+        .foregroundStyle(isIndexing ? .gray : .accent)
       }
-      .tint(.accentColor)
+      .disabled(isIndexing)
 
       Button {
         Haptics.selection()
         viewModel.openAppSettings()
       } label: {
         Label("Manage Photos Permission", systemImage: "photo.badge.shield.exclamationmark")
+          .foregroundStyle(.accent)
       }
-      .tint(.accentColor)
 
-      if !records.isEmpty && !isIndexing {
-        Button {
-          Haptics.impact(.medium)
-          withAnimation(.easeInOut(duration: 0.45)) {
-            rebuildIconAngle += 360
-          }
-          viewModel.showRebuildConfirmation = true
-        } label: {
-          Label {
-            Text("Rebuild Full Index")
-          } icon: {
-            Image(systemName: "arrow.2.circlepath")
-              .rotationEffect(.degrees(rebuildIconAngle))
-          }
+      Button {
+        Haptics.impact(.medium)
+        viewModel.showRebuildConfirmation = true
+      } label: {
+        Label {
+          Text("Rebuild Full Index")
+        } icon: {
+          Image(systemName: "arrow.2.circlepath")
         }
-        .tint(.accentColor)
-        .transition(.opacity.combined(with: .scale(scale: 0.95)))
-
-        Button(role: .destructive) {
-          Haptics.notification(.warning)
-          viewModel.showDeleteConfirmation = true
-        } label: {
-          Label("Delete Index", systemImage: "trash")
-            .foregroundStyle(.red)
-        }
+        .foregroundStyle(isDisabled ? .gray : .accent)
       }
+      .disabled(isDisabled)
+
+      Button(role: .destructive) {
+        Haptics.notification(.warning)
+        viewModel.showDeleteConfirmation = true
+      } label: {
+        Label("Delete Index", systemImage: "trash")
+          .foregroundStyle(isDisabled ? .gray : .red)
+      }
+      .disabled(isDisabled)
     }
   }
 

@@ -46,7 +46,7 @@ struct PaywallView: View {
       }
       .tint(.accentColor)
 
-      Button("Cancel", role: .cancel) {
+      Button("Not now", role: .cancel) {
         dismiss()
       }
     } message: {

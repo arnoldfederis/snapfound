@@ -87,6 +87,7 @@ struct HomeLibraryTabView: View {
             freeLimitBanner
           }
           .padding(.horizontal, 16)
+          .padding(.bottom, 8)
 
           if records.isEmpty {
             noScreenshotsEmptyState
