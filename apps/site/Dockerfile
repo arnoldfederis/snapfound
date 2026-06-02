@@ -15,6 +15,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY . .
 RUN cd apps/site && bun run build
 
+FROM node:22-slim AS sharp-installer
+WORKDIR /install
+RUN npm install --no-package-lock sharp@0.34.5
+
 FROM oven/bun:1-slim AS runner
 WORKDIR /app
 
@@ -27,8 +31,8 @@ ENV HOSTNAME=0.0.0.0
 COPY --from=build /app/apps/site/.next/standalone ./
 COPY --from=build /app/apps/site/.next/static ./apps/site/.next/static
 COPY --from=build /app/apps/site/public ./apps/site/public
-COPY --from=deps /app/node_modules/sharp ./node_modules/sharp
-COPY --from=deps /app/node_modules/@img ./node_modules/@img
+COPY --from=sharp-installer /install/node_modules/sharp ./node_modules/sharp
+COPY --from=sharp-installer /install/node_modules/@img ./node_modules/@img
 
 EXPOSE 4000
 CMD ["bun", "apps/site/server.js"]
