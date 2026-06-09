@@ -1,12 +1,9 @@
-import { DownloadIcon } from "lucide-react";
 import Image from "next/image";
 import { FadeIn } from "@/components/common/motion";
 import { PhoneMockup } from "@/components/common/phone-mockup";
-import { buttonVariants } from "@/components/ui/button";
 import { deviceBlurDataURL } from "@/lib/image-placeholders";
 
-// TODO: Replace with actual App Store URL when available
-const APP_STORE_URL = "#";
+const APP_STORE_URL = "https://apps.apple.com/app/id6775673933";
 
 export function Hero() {
   return (
@@ -28,12 +25,22 @@ export function Hero() {
 
         <FadeIn delay={0.2}>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <a className={buttonVariants({ size: "lg" })} href={APP_STORE_URL}>
-              <DownloadIcon className="size-4" />
-              Download on the App Store
+            <a
+              aria-label="Download SnapFound on the App Store"
+              className="inline-block shrink-0 rounded-[0.875rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              href={APP_STORE_URL}
+            >
+              <Image
+                alt="Download on the App Store"
+                className="h-12 w-auto"
+                height={40}
+                priority
+                src="/store-badges/black.svg"
+                width={120}
+              />
             </a>
             <a
-              className={buttonVariants({ variant: "secondary", size: "lg" })}
+              className="font-medium text-muted-foreground text-sm underline-offset-4 transition-colors hover:text-foreground hover:underline"
               href="#how-it-works"
             >
               See how it works

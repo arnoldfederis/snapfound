@@ -100,10 +100,12 @@ struct SearchTabView: View {
             ScrollView(.horizontal) {
               LazyHStack(spacing: 12) {
                 ForEach(recentlyOpenedRecords, id: \.record.assetID) { item in
-                  NavigationLink(value: RecentlyOpenedNavigation(
-                    record: item.record,
-                    list: recentlyOpenedRecords.map(\.record)
-                  )) {
+                  NavigationLink(
+                    value: RecentlyOpenedNavigation(
+                      record: item.record,
+                      list: recentlyOpenedRecords.map(\.record)
+                    )
+                  ) {
                     RecentlyOpenedCard(record: item.record, openedAt: item.openedAt, now: now)
                   }
                   .buttonStyle(.plain)

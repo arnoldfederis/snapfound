@@ -2,11 +2,9 @@
 
 import Image from "next/image";
 import { ThemeSwitcher } from "@/components/common/theme-switcher";
-import { buttonVariants } from "@/components/ui/button";
 import { iconBlurDataURL } from "@/lib/image-placeholders";
 
-// TODO: Replace with actual App Store URL when available
-const APP_STORE_URL = "#";
+const APP_STORE_URL = "https://apps.apple.com/app/id6775673933";
 
 export function Header() {
   return (
@@ -32,8 +30,19 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <ThemeSwitcher />
-          <a className={buttonVariants({ size: "sm" })} href={APP_STORE_URL}>
-            Download
+          <a
+            aria-label="Download SnapFound on the App Store"
+            className="inline-block shrink-0 rounded-[0.625rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            href={APP_STORE_URL}
+          >
+            <Image
+              alt="Download on the App Store"
+              className="h-10 w-auto"
+              height={40}
+              priority
+              src="/store-badges/black.svg"
+              width={120}
+            />
           </a>
         </div>
       </div>

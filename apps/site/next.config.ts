@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactCompiler: true,
   images: {
+    qualities: [85],
     formats: ["image/webp"],
     remotePatterns: [{ protocol: "https", hostname: "**.snapfound.app" }],
   },
